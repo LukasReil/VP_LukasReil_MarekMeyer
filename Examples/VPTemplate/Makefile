@@ -148,5 +148,8 @@ clean:
 	rm -f obj/*.o
 	rm -f obj/*.a
 
+qemu-run: all
+	qemu-system-arm -s -S -machine netduinoplus2 -kernel build/firmware.bin -nographic
+
 .PHONY: all clean
  
