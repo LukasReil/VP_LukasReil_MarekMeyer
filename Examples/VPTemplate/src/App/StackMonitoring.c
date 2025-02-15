@@ -31,17 +31,14 @@ uint32_t getFreeBytes()
 		return -1;
 	}
 
-	for (int i = 0; i < _size_of_stack; i++)
+	for (; pCurrentStackPosition != pEndOfStack;)
 	{
-		if (*pCurrentStackPosition == 0xCDCDCDCD && pCurrentStackPosition != pEndOfStack)
-		{
-			freeBytes++;
-			pCurrentStackPosition++;
-		}
-		else
+		if (*pCurrentStackPosition != 0xCDCDCDCD)
 		{
 			break;
 		}
+		freeBytes = freeBytes + 4;
+		pCurrentStackPosition++;
 	}
 	return freeBytes;
 }
@@ -50,9 +47,9 @@ uint8_t getStackValidity()
 	uint32_t *pTopOfStack = &_top_of_stack;
 
 	if (pTopOfStack == 0)
-		{
-			return -1;
-		}
+	{
+		return 0;
+	}
 	if (*pTopOfStack == 0xABABABAB)
 	{
 		return 1;
