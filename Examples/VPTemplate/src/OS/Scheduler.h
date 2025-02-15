@@ -20,11 +20,14 @@
 #include <stdint.h>
 
 /***** CONSTANTS *************************************************************/
-
+const extern uint32_t _stext;                        //!< Symbol from linker file to detect invalid function pointers
+const extern uint32_t _etext;                        //!< Symbol from linker file to detect invalid function pointers
 
 /***** MACROS ****************************************************************/
 #define SCHED_ERR_OK                0           //!< No error occured (Scheduler)
 #define SCHED_ERR_INVALID_PTR       -1          //!< Invalid pointer (Scheduler)
+#define SCHED_ERR_INVALID_FUNC_PTR  -2          //!< Invalid function pointer
+
 
 /***** TYPES *****************************************************************/
 
@@ -97,5 +100,80 @@ int32_t schedInitialize(Scheduler* pScheduler);
  * @return SCHED_ERR_OK if no error occured
  */
 int32_t schedCycle(Scheduler* pScheduler);
+
+/**
+ * @brief Registers the function, which gets called by the scheduler,
+ *        to determine the time
+ * 
+ * @param pScheduler Pointer to scheduler struct
+ * @param toRegisterFunction The function, which gets registered
+ * 
+ * @return SCHED_ERR_OK if not error eccured
+ */
+int32_t registerHALTickFunction(Scheduler* pScheduler, GetHALTick halTickFunction);
+
+
+/**
+ * @brief Registers the function, which gets called every millisecond.
+ * 
+ * @param pScheduler Pointer to scheduler struct
+ * @param toRegisterFunction The function, which gets registered
+ * 
+ * @return SCHED_ERR_OK if not error eccured
+ */
+int32_t register1msTask(Scheduler* pScheduler, CyclicFunction toRegisterFunction);
+
+/**
+ * @brief Registers the function, which gets called every 10 milliseconds.
+ * 
+ * @param pScheduler Pointer to scheduler struct
+ * @param toRegisterFunction The function, which gets registered
+ * 
+ * @return SCHED_ERR_OK if not error eccured
+ */
+int32_t register10msTask(Scheduler* pScheduler, CyclicFunction toRegisterFunction);
+
+/**
+ * @brief Registers the function, which gets called every 100 milliseconds.
+ * 
+ * @param pScheduler Pointer to scheduler struct
+ * @param toRegisterFunction The function, which gets registered
+ * 
+ * @return SCHED_ERR_OK if not error eccured
+ */
+int32_t register100msTask(Scheduler* pScheduler, CyclicFunction toRegisterFunction);
+
+/**
+ * @brief Registers the function, which gets called every 250 milliseconds.
+ * 
+ * @param pScheduler Pointer to scheduler struct
+ * @param toRegisterFunction The function, which gets registered
+ * 
+ * @return SCHED_ERR_OK if not error eccured
+ */
+int32_t register250msTask(Scheduler* pScheduler, CyclicFunction toRegisterFunction);
+
+/**
+ * @brief Registers the function, which gets called every 1000 milliseconds.
+ * 
+ * @param pScheduler Pointer to scheduler struct
+ * @param toRegisterFunction The function, which gets registered
+ * 
+ * @return SCHED_ERR_OK if not error eccured
+ */
+int32_t register1000msTask(Scheduler* pScheduler, CyclicFunction toRegisterFunction);
+
+
+
+/***** PRIVATE FUNCTIONS *****************************************************/
+/**
+ * @brief Checks if a function pointer lies inside of the program FLASH 
+ * 
+ * @param toRegisterFunction The function, which gets tested
+ * 
+ * @return FUNC_VALID if the function pointer lies inside of the program FLASH 
+ *         FUNC_NOT_VALID if the function pointer lies outside of the program FLASH 
+ */
+static uint8_t isCyclicFunctionValid(CyclicFunction toCheckFunction);
 
 #endif
