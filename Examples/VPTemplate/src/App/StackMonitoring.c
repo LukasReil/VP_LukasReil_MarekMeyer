@@ -15,11 +15,13 @@ void initMemoryChecker()
 {
 
 }
+
 void cyclic250ms_StackMonitoring()
 {
 	getFreeBytes();
 	getStackValidity();
 }
+
 uint32_t getFreeBytes()
 {
 	uint32_t *pCurrentStackPosition = &_top_of_stack + 4;
@@ -31,17 +33,18 @@ uint32_t getFreeBytes()
 		return -1;
 	}
 
-	for (; pCurrentStackPosition != pEndOfStack;)
+	for (; pCurrentStackPosition != pEndOfStack; pCurrentStackPosition++)
 	{
 		if (*pCurrentStackPosition != 0xCDCDCDCD)
 		{
 			break;
 		}
 		freeBytes = freeBytes + 4;
-		pCurrentStackPosition++;
+
 	}
 	return freeBytes;
 }
+
 uint8_t getStackValidity()
 {
 	uint32_t *pTopOfStack = &_top_of_stack;
