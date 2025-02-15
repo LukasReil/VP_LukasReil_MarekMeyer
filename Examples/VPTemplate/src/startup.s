@@ -64,6 +64,33 @@ LoopFillZerobss:
   ldr r0, =_initial_stack_pointer	/* Load address of initial_stack_pointer into R0 for. Symbol defined in Linker Script */
   mov   sp, r0          			/* set stack pointer */
 
+
+LoopCopyDataInitStack:
+  adds r4, r0, r3
+  cmp r4, r1
+  bcc CopyDataInit
+
+
+  ldr r2, = _top_of_stack
+  ldr r4, = _bottom_of_stack
+  /* ABABABAB fill the top of Stack */
+  movs r3, #0xABABABAB
+  str r3, [r2], #4
+  /* CDCDCDCD fill the Stack. */
+  movs r3, #0xCDCDCDCD
+  b LoopFillStack
+
+FillStack:
+  str  r3, [r2]
+  adds r2, r2, #4
+
+LoopFillStack:
+  cmp r2, r4
+  bcc FillStack
+
+  ldr r0, =_initial_stack_pointer	/* Load address of initial_stack_pointer into R0 for. Symbol defined in Linker Script */
+  mov   sp, r0          			/* set stack pointer */
+
   /* Call the clock system intitialization function.*/
   bl  SystemInit
 
