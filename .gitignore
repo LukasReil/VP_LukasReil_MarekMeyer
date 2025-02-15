@@ -2,6 +2,12 @@
 /Examples/CStartup/.settings
 /Examples/CStartup/.cproject
 
+**/.project
+**/.settings
+**/.cproject
+
+
+
 **/.ccls-cache
 .vscode
 
