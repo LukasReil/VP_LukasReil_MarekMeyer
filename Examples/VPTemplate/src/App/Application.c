@@ -25,6 +25,8 @@
 #include "UARTModule.h"
 #include "ButtonModule.h"
 #include "LEDModule.h"
+#include "DisplayModule.h"
+#include "ButtonService.h"
 
 #include "Util/StateTable/StateTable.h"
 
@@ -46,7 +48,8 @@ static int32_t onStateOperational(State_t* pState, int32_t eventID);
 static int32_t onStateMaintenance(State_t* pState, int32_t eventID);
 
 /***** PRIVATE VARIABLES *****************************************************/
-
+static int8_t s_setFlowRate = -1;
+static uint8_t s_displayCycle = 0b1;
 /**
  * @brief List of State for the State Machine
  *
@@ -155,6 +158,58 @@ static int32_t onStateOperational(State_t* pState, int32_t eventID)
 
 static int32_t onStateMaintenance(State_t* pState, int32_t eventID)
 {
+	static uint8_t flowRateTensDigit = 0;
+	static uint8_t flowRateOneDigit = 0;
+
+	if(s_setFlowRate < 0)
+	{
+		if(s_displayCycle)
+		{
+			displayShowDigit(LEFT_DISPLAY, DIGIT_DASH);
+		}
+		else
+		{
+			dislpayShowDigit(RIGHT_DISPLAY, DIGIT_DASH);
+		}
+		s_displayCycle ^= 1;
+	}
+	else
+	{
+		flowRateOneDigit = s_setFlowRate % 10;
+		flowRateTensDigit = s_setFlowRate / 10;
+		flowRateTensDigit = flowRateTensDigit % 10;
+		if(s_displayCycle)
+		{
+			displayShowDigit(LEFT_DISPLAY, flowRateTensDigit);
+		}
+		else
+		{
+			displayShowDigit(RIGHT_DISPLAY, flowRateOneDigit);
+		}
+		s_displayCycle ^= 1;
+	}
+
+	if (g_buttonSW1Value == 1 && g_buttonSW2Value == 1)
+	{
+
+	}
+	else if (g_buttonSW1Value == 1)
+	{
+		if (s_setFlowRate <= 75)
+		{
+			s_setFlowRate = s_setFlowRate + 5;
+		}
+	}
+	else if (g_buttonSW2Value == 1)
+	{
+		if (s_setFlowRate >= 5)
+		{
+			s_setFlowRate = s_setFlowRate - 5;
+		}
+
+	}
+
+	if (g_buttonB1Value == 1)
 
     return STATETBL_ERR_OK;
 }
