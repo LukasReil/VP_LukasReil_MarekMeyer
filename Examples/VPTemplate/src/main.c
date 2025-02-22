@@ -30,6 +30,9 @@
 #include "DisplayModule.h"
 #include "Scheduler.h"
 
+#include "App/Application.h"
+#include "App/AppTasks.h"
+
 #include "GlobalObjects.h"
 
 
@@ -67,16 +70,21 @@ int main(void)
 
     // Prepare Scheduler
     // ...
+    appInitialize();
+
+    registerHALTickFunction(&gScheduler, HAL_GetTick);
+
+    registerTask(&gScheduler, 10, taskApp10ms);
+    registerTask(&gScheduler, 50, taskApp50ms);
+    registerTask(&gScheduler, 250, taskApp250ms);
+
 
     // Initialize Scheduler
     schedInitialize(&gScheduler);
 
-    int globalCounter = 0;
-    int currentDisplay = 0;
-
     while (1)
     {
-        // Call the Scheduler
+        // Run the scheduler
         schedCycle(&gScheduler);
     }
 }
