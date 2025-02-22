@@ -160,23 +160,25 @@ static int32_t onStateOperational(State_t* pState, int32_t eventID)
 /**
  * @brief function to set and show the flow rate
  * @details This function can set the flow rate using the SW1 and SW2 buttons
- * 			It can also show the selected value and initiate the switch to the Operation Mode
+ * It can also show the selected value and initiate the switch to the Operation Mode
  * @param pState: Pointer to pass on the current state of the State machine
  * @param enventID: variable to notify the function from which state it was called.
  * **/
 
 static int32_t onStateMaintenance(State_t* pState, int32_t eventID)
 {
+	/* calculating the Digits according to the flow rate */
+	uint8_t flowRateTensDigit = (s_setFlowRate / 10) % 10;
+	uint8_t flowRateOneDigit  = s_setFlowRate % 10;
 
-	static uint8_t flowRateTensDigit = 0;
-	static uint8_t flowRateOneDigit = 0;
-
+	/* checking and saving whether the SW1 or/and Sw2 were pressed or not */
 	uint8_t buttonState_SW1 = wasButtonSW1Pressed();
 	uint8_t buttonState_SW2 = wasButtonSW2Pressed();
 
 	/* check whether the flow rate is set or not. */
 	if(s_setFlowRate < 0)
 	{
+		/* showing the flow rate failure on the 7 Seg. display */
 		if(s_displayCycle)
 		{
 			displayShowDigit(LEFT_DISPLAY, DIGIT_DASH);
@@ -189,10 +191,7 @@ static int32_t onStateMaintenance(State_t* pState, int32_t eventID)
 	}
 	else
 	{
-		/* calculating the Digits according to the flow rate */
-		flowRateOneDigit = s_setFlowRate % 10;
-		flowRateTensDigit = s_setFlowRate / 10;
-		flowRateTensDigit = flowRateTensDigit % 10;
+
 
 		/* showing the set flow rate on the 7 Seg. display. */
 		if(s_displayCycle)
