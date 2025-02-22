@@ -1,8 +1,17 @@
-#include "ADCService.h"
-
+/******************************************************************************
+ * @file ADCService.c
+ *
+ * @author Lukas Reil
+ * @date   22.02.2025
+ *
+ * @copyright Copyright (c) 2025
+ *
+ ******************************************************************************/
 
 /***** INCLUDES **************************************************************/
 
+#include "ADCService.h"
+#include "../HAL/ADCModule.h"
 
 /***** PRIVATE CONSTANTS *****************************************************/
 
@@ -35,7 +44,7 @@ int32_t readPot1()
 
 int32_t readPot2()
 {
-    static int32_t lastInputs[POT2_WINDOW_SIZE] = {0,0,0,0,0};
+    static int32_t lastInputs[POT2_WINDOW_SIZE];
     int32_t adcValue = adcReadChannel(ADC_INPUT1);
     int32_t sum = adcValue;
     for(int i = POT2_WINDOW_SIZE - 1; i > 0; i--)
