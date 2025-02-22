@@ -34,30 +34,56 @@
 
 /***** PROTOTYPES ************************************************************/
 
-extern uint8_t g_buttonB1Value;
-extern uint8_t g_buttonSW1Value;
-extern uint8_t g_buttonSW2Value;
+/**
+ * @return 1 if the button B1 was pressed and this is the first time the function is called
+ *         0 otherwise
+ */
+uint8_t wasButtonB1Pressed();
+
+/**
+ * @return 1 if the button SW1 was pressed and this is the first time the function is called
+ *         0 otherwise
+ */
+uint8_t wasButtonSW1Pressed();
+
+/**
+ * @return 1 if the button SW2 was pressed and this is the first time the function is called
+ *         0 otherwise
+ */
+uint8_t wasButtonSW2Pressed();
+
+/**
+ * @return The value of the button B1
+ */
+uint8_t getButtonB1Value();
+
+/**
+ * @return The value of the button SW1
+ */
+uint8_t getButtonSW1Value();
+
+/**
+ * @return The value of the button SW2
+ */
+uint8_t getButtonSW2Value();
 
 /**
  * @brief   Reads the value of B1 and debounces it using a two-point controller
  *          The filtered value is stored in the global variable g_buttonB1Value
- * @return  uint8_t Filtered value of the B1
  */
-uint8_t readButtonB1();
+void readButtonB1();
 
 /**
  * @brief   Reads the value of SW1 and debounces it using a two-point controller
  *          The filtered value is stored in the global variable g_buttonSW1Value
- * @return  uint8_t Filtered value of the SW1
  */
-uint8_t readButtonSW1();
+void readButtonSW1();
 
 /**
  * @brief   Reads the value of SW2 and debounces it using a two-point controller
  *          The filtered value is stored in the global variable g_buttonSW2Value
- * @return  uint8_t Filtered value of the SW2
  */
-uint8_t readButtonSW2();
+void readButtonSW2();
 
 
 
