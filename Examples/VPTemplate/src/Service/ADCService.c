@@ -33,16 +33,25 @@
 int32_t g_pot1Value = 0;
 int32_t g_pot2Value = 0;
 
-int32_t readPot1()
+int32_t getPot1Value()
+{
+    return g_pot1Value;
+}
+
+int32_t getPot2Value()
+{
+    return g_pot2Value;
+}
+
+void readPot1()
 {
     static int32_t lastOutput = 0;
     int32_t adcValue = adcReadChannel(ADC_INPUT0);
     lastOutput = adcValue / POT1_EMA_ALPHA_INV + (lastOutput - lastOutput / POT1_EMA_ALPHA_INV);
     g_pot1Value = lastOutput;
-    return lastOutput;
 }
 
-int32_t readPot2()
+void readPot2()
 {
     static int32_t lastInputs[POT2_WINDOW_SIZE];
     int32_t adcValue = adcReadChannel(ADC_INPUT1);
@@ -54,7 +63,6 @@ int32_t readPot2()
     }
     lastInputs[0] = adcValue;
     g_pot2Value = sum / POT2_WINDOW_SIZE;
-    return g_pot2Value;
 }
 
 /***** PRIVATE FUNCTIONS *****************************************************/

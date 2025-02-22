@@ -35,26 +35,33 @@
 
 /***** PROTOTYPES ************************************************************/
 
-extern int32_t g_pot1Value;
-extern int32_t g_pot2Value;
+/**
+ * @brief   Returns the value of the first potentiometer
+ * 
+ * @return  The value of the first potentiometer
+ */
+int32_t getPot1Value();
+
+/**
+ * @brief   Returns the value of the second potentiometer
+ * 
+ * @return  The value of the second potentiometer
+ */
+int32_t getPot2Value();
 
 /**
  * @brief   Reads the value of the first potentiometer and filters it with an exponential moving average filter.
  *          The filter is defined by the constant POT1_EMA_ALPHA_INV
  *          The filtered value is stored in the global variable g_pot1Value
- * 
- * @return  int32_t Filtered value of the first potentiometer
  */
-int32_t readPot1();
+void readPot1();
 
 /**
  * @brief   Reads the value of the second potentiometer and filters it with a moving average filter
  *          The filter is defined by the constant POT2_WINDOW_SIZE
  *          The filtered value is stored in the global variable g_pot2Value
- * 
- * @return  int32_t Filtered value of the second potentiometer
  */
-int32_t readPot2();
+void readPot2();
 
 
 
