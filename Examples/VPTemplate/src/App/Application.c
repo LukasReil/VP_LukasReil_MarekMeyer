@@ -35,7 +35,8 @@
 
 
 /***** PRIVATE MACROS ********************************************************/
-
+#define MAX_FLOW_RATE 80u
+#define MIN_FLOW_RATE 0u
 
 /***** PRIVATE TYPES *********************************************************/
 
@@ -158,8 +159,12 @@ static int32_t onStateOperational(State_t* pState, int32_t eventID)
 
 static int32_t onStateMaintenance(State_t* pState, int32_t eventID)
 {
+
 	static uint8_t flowRateTensDigit = 0;
 	static uint8_t flowRateOneDigit = 0;
+
+	uint8_t buttonState_SW1 = wasButtonSW1Pressed();
+	uint8_t buttonState_SW2 = wasButtonSW2Pressed();
 
 	if(s_setFlowRate < 0)
 	{
@@ -189,27 +194,30 @@ static int32_t onStateMaintenance(State_t* pState, int32_t eventID)
 		s_displayCycle ^= 1;
 	}
 
-	if (g_buttonSW1Value == 1 && g_buttonSW2Value == 1)
+	if (buttonState_SW1 && buttonState_SW2)
 	{
 
 	}
-	else if (g_buttonSW1Value == 1)
+	else if (buttonState_SW1)
 	{
-		if (s_setFlowRate <= 75)
+		if (s_setFlowRate <= (MAX_FLOW_RATE - 5))
 		{
 			s_setFlowRate = s_setFlowRate + 5;
 		}
 	}
-	else if (g_buttonSW2Value == 1)
+	else if (buttonState_SW2)
 	{
-		if (s_setFlowRate >= 5)
+		if (s_setFlowRate >= (MIN_FLOW_RATE + 5))
 		{
 			s_setFlowRate = s_setFlowRate - 5;
 		}
 
 	}
 
-	if (g_buttonB1Value == 1)
+	if (wasButtonB1Pressed())
+	{
+		appSendEvent(EVT_ID_EVENT_MAINTENANCE);
+	}
 
     return STATETBL_ERR_OK;
 }
