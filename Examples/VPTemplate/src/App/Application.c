@@ -25,6 +25,8 @@
 #include "UARTModule.h"
 #include "ButtonModule.h"
 #include "LEDModule.h"
+#include "DisplayModule.h"
+#include "ButtonService.h"
 
 #include "Util/StateTable/StateTable.h"
 
@@ -41,12 +43,13 @@
 /***** PRIVATE PROTOTYPES ****************************************************/
 // State realte functions (on-Entry, on-State and on-Exit)
 static int32_t onEntryBootup(State_t* pState, int32_t eventID);
+static int32_t onEntryFailure(State_t* pState, int32_t eventID);
 static int32_t onStateOperational(State_t* pState, int32_t eventID);
 static int32_t onStateMaintenance(State_t* pState, int32_t eventID);
-static int32_t onEntryFailure(State_t* pState, int32_t eventID);
 
 /***** PRIVATE VARIABLES *****************************************************/
-
+static int8_t s_setFlowRate = -1;
+static uint8_t s_displayCycle = 0b1;
 /**
  * @brief List of State for the State Machine
  *
@@ -120,17 +123,93 @@ static int32_t onEntryBootup(State_t* pState, int32_t eventID)
     return appSendEvent(EVT_ID_SYSTEM_OK);
 }
 
+static int32_t onEntryFailure(State_t* pState, int32_t eventID)
+{
+    if(eventID == EVT_ID_SENSOR_FAILURE)
+    {
+        ledSetLED(LED0, LED_OFF);
+        ledSetLED(LED2, LED_ON);
+        ledSetLED(LED4, LED_ON);
+    }
+    else if(eventID == EVT_ID_STACK_OVERFLOW)
+    {
+        ledSetLED(LED0, LED_ON);
+        ledSetLED(LED1, LED_ON);
+        ledSetLED(LED2, LED_ON);
+        ledSetLED(LED3, LED_ON);
+        ledSetLED(LED4, LED_ON);
+    }
+    else
+    {
+        ledSetLED(LED0, LED_OFF);
+        ledSetLED(LED2, LED_ON);
+        ledSetLED(LED4, LED_OFF);
+    }
+    return STATETBL_ERR_OK;
+}
+
 static int32_t onStateOperational(State_t* pState, int32_t eventID)
 {
 
+    
+
+    return STATETBL_ERR_OK;
 }
 
 static int32_t onStateMaintenance(State_t* pState, int32_t eventID)
 {
+	static uint8_t flowRateTensDigit = 0;
+	static uint8_t flowRateOneDigit = 0;
 
-}
+	if(s_setFlowRate < 0)
+	{
+		if(s_displayCycle)
+		{
+			displayShowDigit(LEFT_DISPLAY, DIGIT_DASH);
+		}
+		else
+		{
+			dislpayShowDigit(RIGHT_DISPLAY, DIGIT_DASH);
+		}
+		s_displayCycle ^= 1;
+	}
+	else
+	{
+		flowRateOneDigit = s_setFlowRate % 10;
+		flowRateTensDigit = s_setFlowRate / 10;
+		flowRateTensDigit = flowRateTensDigit % 10;
+		if(s_displayCycle)
+		{
+			displayShowDigit(LEFT_DISPLAY, flowRateTensDigit);
+		}
+		else
+		{
+			displayShowDigit(RIGHT_DISPLAY, flowRateOneDigit);
+		}
+		s_displayCycle ^= 1;
+	}
 
-static int32_t onEntryFailure(State_t* pState, int32_t eventID)
-{
-    
+	if (g_buttonSW1Value == 1 && g_buttonSW2Value == 1)
+	{
+
+	}
+	else if (g_buttonSW1Value == 1)
+	{
+		if (s_setFlowRate <= 75)
+		{
+			s_setFlowRate = s_setFlowRate + 5;
+		}
+	}
+	else if (g_buttonSW2Value == 1)
+	{
+		if (s_setFlowRate >= 5)
+		{
+			s_setFlowRate = s_setFlowRate - 5;
+		}
+
+	}
+
+	if (g_buttonB1Value == 1)
+
+    return STATETBL_ERR_OK;
 }
