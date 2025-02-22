@@ -15,6 +15,11 @@
 
 /***** INCLUDES **************************************************************/
 #include "StateTable.h"
+#include "Global.h"
+
+#if LOG_OUTPUT_ENABLED
+#include "LogOutput.h"
+#endif // LOG_OUTPUT_ENABLED
 
 
 /***** PRIVATE CONSTANTS *****************************************************/
@@ -114,6 +119,10 @@ int32_t stateTableRunCyclic(StateTable_t* pStateTable)
                         // Reset the OnEntry flag
                         pEntry->pFromStateRef->onEntryCalled = false;
                     }
+
+                    #if LOG_OUTPUT_ENABLED
+                    outputLogf("State Transition from %d to %d with event %d\n", pStateTable->currentStateID, pEntry->stateIDTo, currentEvent);
+                    #endif
 
                     // Perform the transition
                     pStateTable->previousStateID    = pStateTable->currentStateID;

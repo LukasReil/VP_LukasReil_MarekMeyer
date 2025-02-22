@@ -61,6 +61,7 @@ SECTIONS
   .text :
   {
     . = ALIGN(4);
+    _stext = .;        /* define a global symbols at start of code */
     *(.text)           /* .text sections (code) */
     *(.text*)          /* .text* sections (code) */
     *(.glue_7)         /* glue arm to thumb code */

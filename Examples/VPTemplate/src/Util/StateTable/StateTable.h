@@ -20,6 +20,7 @@
 #include <stdbool.h>
 
 
+
 /***** CONSTANTS *************************************************************/
 
 
@@ -36,6 +37,8 @@
 #define STT_UNKNOWN_STATE                   1       //!< Unknown state ID
 
 #define STT_NONE_EVENT                      0       //!< ID for "No Event"
+
+#
 
 
 /***** TYPES *****************************************************************/
