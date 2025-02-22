@@ -31,6 +31,7 @@
 #include "Scheduler.h"
 
 #include "App/Application.h"
+#include "App/AppTasks.h"
 
 #include "GlobalObjects.h"
 
@@ -72,6 +73,11 @@ int main(void)
     appInitialize();
 
     registerHALTickFunction(&gScheduler, HAL_GetTick);
+
+    registerTask(&gScheduler, 10, taskApp10ms);
+    registerTask(&gScheduler, 50, taskApp50ms);
+    registerTask(&gScheduler, 250, taskApp250ms);
+
 
     // Initialize Scheduler
     schedInitialize(&gScheduler);

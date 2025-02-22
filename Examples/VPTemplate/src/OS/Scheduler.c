@@ -23,11 +23,6 @@
 
 
 /***** PRIVATE MACROS ********************************************************/
-#define HAL_TICK_VALUE_1MS      1       //!< Number of HAL Ticks used for 1ms Tasks
-#define HAL_TICK_VALUE_10MS     10      //!< Number of HAL Ticks used for 10ms Tasks
-#define HAL_TICK_VALUE_100MS    100     //!< Number of HAL Ticks used for 100ms Tasks
-#define HAL_TICK_VALUE_250MS    250     //!< Number of HAL Ticks used for 250ms Tasks
-#define HAL_TICK_VALUE_1000MS   1000    //!< Number of HAL Ticks used for 1000ms Tasks
 
 #define FUNC_VALID                  0           //!< Function pointer is in text section
 #define FUNC_NOT_VALID              1           //!< Function pointer is not in text section
@@ -37,6 +32,15 @@
 
 /***** PRIVATE PROTOTYPES ****************************************************/
 
+/**
+ * @brief Checks if a function pointer lies inside of the program FLASH 
+ * 
+ * @param toRegisterFunction The function, which gets tested
+ * 
+ * @return FUNC_VALID if the function pointer lies inside of the program FLASH 
+ *         FUNC_NOT_VALID if the function pointer lies outside of the program FLASH 
+ */
+static uint8_t isCyclicFunctionValid(CyclicFunction toCheckFunction);
 
 /***** PRIVATE VARIABLES *****************************************************/
 
@@ -54,11 +58,9 @@ int32_t schedInitialize(Scheduler* pScheduler)
     }
 
     uint32_t beginTickTime      = pScheduler->pGetHALTick();
-    pScheduler->halTick_1ms     = beginTickTime;
-    pScheduler->halTick_10ms    = beginTickTime;
-    pScheduler->halTick_100ms   = beginTickTime;
-    pScheduler->halTick_250ms   = beginTickTime;
-    pScheduler->halTick_1000ms  = beginTickTime;    
+    for(uint32_t i = 0; i < pScheduler->registeredTaskCount; i++){
+        pScheduler->tasks[i].lastExecution = beginTickTime;
+    }
 
     return SCHED_ERR_OK;
 }
@@ -73,50 +75,15 @@ int32_t schedCycle(Scheduler* pScheduler)
         return SCHED_ERR_INVALID_PTR;
     }
 
-    uint32_t nowTickTime = pScheduler->pGetHALTick();
-    if(nowTickTime - pScheduler->halTick_1ms >= HAL_TICK_VALUE_1MS){
-        pScheduler->halTick_1ms += HAL_TICK_VALUE_1MS;
-        if(pScheduler->pTask_1ms != 0){
-            pScheduler->pTask_1ms();
+    for(uint32_t i = 0; i < pScheduler->registeredTaskCount; i++){
+        uint32_t nowTickTime = pScheduler->pGetHALTick();
+        if(nowTickTime - pScheduler->tasks[i].lastExecution >= pScheduler->tasks[i].period){
+            pScheduler->tasks[i].lastExecution += pScheduler->tasks[i].period;
+            if(pScheduler->tasks[i].pTask != 0){
+                pScheduler->tasks[i].pTask();
+            }
         }
     }
-
-
-    nowTickTime = pScheduler->pGetHALTick();
-    if(nowTickTime - pScheduler->halTick_10ms >= HAL_TICK_VALUE_10MS){
-        pScheduler->halTick_10ms += HAL_TICK_VALUE_10MS;
-        if(pScheduler->pTask_10ms != 0){
-            pScheduler->pTask_10ms();
-        }
-    }
-
-
-    nowTickTime = pScheduler->pGetHALTick();
-    if(nowTickTime - pScheduler->halTick_10ms >= HAL_TICK_VALUE_100MS){
-        pScheduler->halTick_100ms += HAL_TICK_VALUE_100MS;
-        if(pScheduler->pTask_100ms != 0){
-            pScheduler->pTask_100ms();
-        }
-    }
-
-
-    nowTickTime = pScheduler->pGetHALTick();
-    if(nowTickTime - pScheduler->halTick_250ms >= HAL_TICK_VALUE_250MS){
-        pScheduler->halTick_250ms += HAL_TICK_VALUE_250MS;
-        if(pScheduler->pTask_250ms != 0){
-            pScheduler->pTask_250ms();
-        }
-    }
-
-
-    nowTickTime = pScheduler->pGetHALTick();
-    if(nowTickTime - pScheduler->halTick_1000ms >= HAL_TICK_VALUE_1000MS){
-        pScheduler->halTick_1000ms += HAL_TICK_VALUE_1000MS;
-        if(pScheduler->pTask_1000ms != 0){
-            pScheduler->pTask_1000ms();
-        }
-    }
-
 
     return SCHED_ERR_OK;
 }
@@ -133,7 +100,7 @@ int32_t registerHALTickFunction(Scheduler* pScheduler, GetHALTick halTickFunctio
     pScheduler->pGetHALTick = halTickFunction;
 }
 
-int32_t register1msTask(Scheduler* pScheduler, CyclicFunction toRegisterFunction)
+int32_t registerTask(Scheduler *pScheduler, uint32_t period, CyclicFunction toRegisterFunction)
 {
     if(pScheduler == 0){
         return SCHED_ERR_INVALID_PTR;
@@ -141,56 +108,16 @@ int32_t register1msTask(Scheduler* pScheduler, CyclicFunction toRegisterFunction
     if(isCyclicFunctionValid(toRegisterFunction) != FUNC_VALID){
         return SCHED_ERR_INVALID_FUNC_PTR;
     }
-
-    pScheduler->pTask_1ms = toRegisterFunction;
-}
-
-int32_t register10msTask(Scheduler* pScheduler, CyclicFunction toRegisterFunction)
-{
-    if(pScheduler == 0){
-        return SCHED_ERR_INVALID_PTR;
-    }
-    if(isCyclicFunctionValid(toRegisterFunction) != FUNC_VALID){
-        return SCHED_ERR_INVALID_FUNC_PTR;
+    if(pScheduler->registeredTaskCount >= MAX_SCHEDULER_TASKS){
+        return SCHED_ERR_MAX_TASKS_REACHED;
     }
 
-    pScheduler->pTask_10ms = toRegisterFunction;
-}
+    pScheduler->tasks[pScheduler->registeredTaskCount].period = period;
+    pScheduler->tasks[pScheduler->registeredTaskCount].pTask = toRegisterFunction;
+    pScheduler->tasks[pScheduler->registeredTaskCount].lastExecution = 0;
 
-int32_t register100msTask(Scheduler* pScheduler, CyclicFunction toRegisterFunction)
-{
-    if(pScheduler == 0){
-        return SCHED_ERR_INVALID_PTR;
-    }
-    if(isCyclicFunctionValid(toRegisterFunction) != FUNC_VALID){
-        return SCHED_ERR_INVALID_FUNC_PTR;
-    }
-
-    pScheduler->pTask_100ms = toRegisterFunction;
-}
-
-int32_t register250msTask(Scheduler* pScheduler, CyclicFunction toRegisterFunction)
-{
-    if(pScheduler == 0){
-        return SCHED_ERR_INVALID_PTR;
-    }
-    if(isCyclicFunctionValid(toRegisterFunction) != FUNC_VALID){
-        return SCHED_ERR_INVALID_FUNC_PTR;
-    }
-
-    pScheduler->pTask_250ms = toRegisterFunction;
-}
-
-int32_t register1000msTask(Scheduler* pScheduler, CyclicFunction toRegisterFunction)
-{
-    if(pScheduler == 0){
-        return SCHED_ERR_INVALID_PTR;
-    }
-    if(isCyclicFunctionValid(toRegisterFunction) != FUNC_VALID){
-        return SCHED_ERR_INVALID_FUNC_PTR;
-    }
-
-    pScheduler->pTask_1000ms = toRegisterFunction;
+    pScheduler->registeredTaskCount++;
+    return SCHED_ERR_OK;
 }
 
 /***** PRIVATE FUNCTIONS *****************************************************/

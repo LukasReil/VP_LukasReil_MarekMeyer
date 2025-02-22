@@ -37,7 +37,7 @@ int32_t readPot1()
 {
     static int32_t lastOutput = 0;
     int32_t adcValue = adcReadChannel(ADC_INPUT0);
-    lastOutput = POT1_EMA_ALPHA * adcValue + (1 - POT1_EMA_ALPHA) * lastOutput;
+    lastOutput = adcValue / POT1_EMA_ALPHA_INV + (lastOutput - lastOutput / POT1_EMA_ALPHA_INV);
     g_pot1Value = lastOutput;
     return lastOutput;
 }

@@ -47,7 +47,7 @@ uint8_t g_buttonSW2Value;
 uint8_t readButtonB1()
 {
     static uint8_t lastInputs[BUTTON_FILTER_WINDOW_SIZE];
-    uint8_t buttonValue = buttonRead(BTN_B1);
+    uint8_t buttonValue = buttonGetButtonStatus(BTN_B1) == BUTTON_PRESSED;
     hysterese(buttonValue, lastInputs, &g_buttonB1Value);
     return g_buttonB1Value;
 }
@@ -55,7 +55,7 @@ uint8_t readButtonB1()
 uint8_t readButtonSW1()
 {
     static uint8_t lastInputs[BUTTON_FILTER_WINDOW_SIZE];
-    uint8_t buttonValue = buttonRead(BTN_SW1);
+    uint8_t buttonValue = buttonGetButtonStatus(BTN_SW1) == BUTTON_PRESSED;
     hysterese(buttonValue, lastInputs, &g_buttonSW1Value);
     return g_buttonSW1Value;    
 }
@@ -63,7 +63,7 @@ uint8_t readButtonSW1()
 uint8_t readButtonSW2()
 {
     static uint8_t lastInputs[BUTTON_FILTER_WINDOW_SIZE];
-    uint8_t buttonValue = buttonRead(BTN_SW2);
+    uint8_t buttonValue = buttonGetButtonStatus(BTN_SW2) == BUTTON_PRESSED;
     hysterese(buttonValue, lastInputs, &g_buttonSW2Value);
     return g_buttonSW2Value;
 }

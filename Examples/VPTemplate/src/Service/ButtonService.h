@@ -24,7 +24,7 @@
 
 /***** CONSTANTS *************************************************************/
 
-const uint32_t BUTTON_FILTER_WINDOW_SIZE = 5;
+#define BUTTON_FILTER_WINDOW_SIZE 5
 
 /***** MACROS ****************************************************************/
 
@@ -34,9 +34,9 @@ const uint32_t BUTTON_FILTER_WINDOW_SIZE = 5;
 
 /***** PROTOTYPES ************************************************************/
 
-uint8_t g_buttonB1Value;
-uint8_t g_buttonSW1Value;
-uint8_t g_buttonSW2Value;
+extern uint8_t g_buttonB1Value;
+extern uint8_t g_buttonSW1Value;
+extern uint8_t g_buttonSW2Value;
 
 /**
  * @brief   Reads the value of B1 and debounces it using a two-point controller

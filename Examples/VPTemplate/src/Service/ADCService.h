@@ -25,11 +25,10 @@
 
 /***** CONSTANTS *************************************************************/
 
-const uint32_t POT1_EMA_ALPHA = 0.1;
-const uint32_t POT2_WINDOW_SIZE = 5;
 
 /***** MACROS ****************************************************************/
-
+#define POT1_EMA_ALPHA_INV 10
+#define POT2_WINDOW_SIZE    5
 
 /***** TYPES *****************************************************************/
 
@@ -41,7 +40,7 @@ extern int32_t g_pot2Value;
 
 /**
  * @brief   Reads the value of the first potentiometer and filters it with an exponential moving average filter.
- *          The filter is defined by the constant POT1_EMA_ALPHA
+ *          The filter is defined by the constant POT1_EMA_ALPHA_INV
  *          The filtered value is stored in the global variable g_pot1Value
  * 
  * @return  int32_t Filtered value of the first potentiometer

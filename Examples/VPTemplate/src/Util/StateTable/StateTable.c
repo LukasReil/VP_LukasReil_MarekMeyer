@@ -121,7 +121,7 @@ int32_t stateTableRunCyclic(StateTable_t* pStateTable)
                     }
 
                     #if LOG_OUTPUT_ENABLED
-                    logOutput("State Transition from %d to %d with event %d\n", pStateTable->currentStateID, pEntry->stateIDTo, currentEvent);
+                    outputLogf("State Transition from %d to %d with event %d\n", pStateTable->currentStateID, pEntry->stateIDTo, currentEvent);
                     #endif
 
                     // Perform the transition
