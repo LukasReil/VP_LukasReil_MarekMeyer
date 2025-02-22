@@ -41,9 +41,9 @@
 /***** PRIVATE PROTOTYPES ****************************************************/
 // State realte functions (on-Entry, on-State and on-Exit)
 static int32_t onEntryBootup(State_t* pState, int32_t eventID);
+static int32_t onEntryFailure(State_t* pState, int32_t eventID);
 static int32_t onStateOperational(State_t* pState, int32_t eventID);
 static int32_t onStateMaintenance(State_t* pState, int32_t eventID);
-static int32_t onEntryFailure(State_t* pState, int32_t eventID);
 
 /***** PRIVATE VARIABLES *****************************************************/
 
@@ -120,17 +120,41 @@ static int32_t onEntryBootup(State_t* pState, int32_t eventID)
     return appSendEvent(EVT_ID_SYSTEM_OK);
 }
 
+static int32_t onEntryFailure(State_t* pState, int32_t eventID)
+{
+    if(eventID == EVT_ID_SENSOR_FAILURE)
+    {
+        ledSetLED(LED0, LED_OFF);
+        ledSetLED(LED2, LED_ON);
+        ledSetLED(LED4, LED_ON);
+    }
+    else if(eventID == EVT_ID_STACK_OVERFLOW)
+    {
+        ledSetLED(LED0, LED_ON);
+        ledSetLED(LED1, LED_ON);
+        ledSetLED(LED2, LED_ON);
+        ledSetLED(LED3, LED_ON);
+        ledSetLED(LED4, LED_ON);
+    }
+    else
+    {
+        ledSetLED(LED0, LED_OFF);
+        ledSetLED(LED2, LED_ON);
+        ledSetLED(LED4, LED_OFF);
+    }
+    return STATETBL_ERR_OK;
+}
+
 static int32_t onStateOperational(State_t* pState, int32_t eventID)
 {
 
+    
+
+    return STATETBL_ERR_OK;
 }
 
 static int32_t onStateMaintenance(State_t* pState, int32_t eventID)
 {
 
-}
-
-static int32_t onEntryFailure(State_t* pState, int32_t eventID)
-{
-    
+    return STATETBL_ERR_OK;
 }
