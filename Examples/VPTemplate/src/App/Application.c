@@ -174,7 +174,7 @@ static int32_t onStateMaintenance(State_t* pState, int32_t eventID)
 		}
 		else
 		{
-			dislpayShowDigit(RIGHT_DISPLAY, DIGIT_DASH);
+			displayShowDigit(RIGHT_DISPLAY, DIGIT_DASH);
 		}
 		s_displayCycle ^= 1;
 	}
