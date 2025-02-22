@@ -79,6 +79,7 @@ int32_t stateTableInitialize(StateTable_t* pStateTable, StateTableEntry_t* pTabl
 
 int32_t stateTableRunCyclic(StateTable_t* pStateTable)
 {
+    static int32_t lastHandledEvent = STT_NONE_EVENT;
     int32_t result = STATETBL_ERR_EVENT_UNHANDLED;
 
     // Get the current pending event and reset it in the table
@@ -128,6 +129,7 @@ int32_t stateTableRunCyclic(StateTable_t* pStateTable)
                     pStateTable->previousStateID    = pStateTable->currentStateID;
                     pStateTable->currentStateID     = pEntry->stateIDTo;
                     pStateTable->pCurrentStateRef   = pEntry->pToStateRef;
+                    lastHandledEvent                = currentEvent;
 
                     // On Entry will be called in the normal cycle
 
@@ -148,14 +150,14 @@ int32_t stateTableRunCyclic(StateTable_t* pStateTable)
             // Check for onEntry call
             if (pCurrentState->pOnEntry != 0 && pCurrentState->onEntryCalled == false)
             {
-                pCurrentState->pOnEntry(pCurrentState, currentEvent);
+                pCurrentState->pOnEntry(pCurrentState, lastHandledEvent);
                 pCurrentState->onEntryCalled = true;
             }
 
             // Now call the cyclic function
             if (pCurrentState->pOnState != 0)
             {
-                pCurrentState->pOnState(pCurrentState, currentEvent);
+                pCurrentState->pOnState(pCurrentState, lastHandledEvent);
             }
         }
     }
