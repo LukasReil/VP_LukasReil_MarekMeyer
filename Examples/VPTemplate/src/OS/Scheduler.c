@@ -98,6 +98,8 @@ int32_t registerHALTickFunction(Scheduler* pScheduler, GetHALTick halTickFunctio
     }
 
     pScheduler->pGetHALTick = halTickFunction;
+
+    return SCHED_ERR_OK;
 }
 
 int32_t registerTask(Scheduler *pScheduler, uint32_t period, CyclicFunction toRegisterFunction)

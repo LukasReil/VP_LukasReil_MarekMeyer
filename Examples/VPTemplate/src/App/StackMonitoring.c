@@ -9,6 +9,7 @@
 
 #include "StackMonitoring.h"
 #include "LogOutput.h"
+#include "Application.h"
 
 /***** PUBLIC FUNCTIONS ******************************************************/
 
@@ -20,8 +21,11 @@ void initMemoryChecker()
 void cyclic250ms_StackMonitoring()
 {
 	uint32_t freeBytes = getFreeBytes();
-	getStackValidity();
 	outputLogf("Free bytes: %d\n", freeBytes);
+
+	if(getStackValidity() != 1){
+		appSendEvent(EVT_ID_STACK_OVERFLOW);
+	}
 }
 
 uint32_t getFreeBytes()
