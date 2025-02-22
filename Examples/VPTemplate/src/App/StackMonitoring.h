@@ -14,8 +14,6 @@
 
 #include "stdint.h"
 
-#include "Application.h"
-
 
 /***** CONSTANTS *************************************************************/
 

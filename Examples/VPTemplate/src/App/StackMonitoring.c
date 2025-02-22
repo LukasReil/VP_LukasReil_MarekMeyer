@@ -8,6 +8,7 @@
 /***** INCLUDES **************************************************************/
 
 #include "StackMonitoring.h"
+#include "LogOutput.h"
 
 /***** PUBLIC FUNCTIONS ******************************************************/
 
@@ -18,15 +19,16 @@ void initMemoryChecker()
 
 void cyclic250ms_StackMonitoring()
 {
-	getFreeBytes();
+	uint32_t freeBytes = getFreeBytes();
 	getStackValidity();
+	outputLogf("Free bytes: %d\n", freeBytes);
 }
 
 uint32_t getFreeBytes()
 {
 	uint32_t *pCurrentStackPosition = &_top_of_stack + 4;
 	uint32_t *pEndOfStack = &_bottom_of_stack;
-	uint16_t freeBytes = 0;
+	uint32_t freeBytes = 0;
 
 	if (pCurrentStackPosition == 0 || pEndOfStack == 0)
 	{

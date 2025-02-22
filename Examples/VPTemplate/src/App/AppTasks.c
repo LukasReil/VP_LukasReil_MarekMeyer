@@ -21,6 +21,7 @@
 #include "AppTasks.h"
 #include "Service/ADCService.h"
 #include "Service/ButtonService.h"
+#include "StackMonitoring.h"
 
 #include "LEDModule.h"
 
@@ -60,7 +61,7 @@ void taskApp50ms()
 
 void taskApp250ms()
 {
-    ledToggleLED(LED0);
+    cyclic250ms_StackMonitoring();
 }
 
 
