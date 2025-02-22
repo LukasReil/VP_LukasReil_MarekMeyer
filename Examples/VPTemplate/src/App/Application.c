@@ -191,8 +191,6 @@ static int32_t onStateMaintenance(State_t* pState, int32_t eventID)
 	}
 	else
 	{
-
-
 		/* showing the set flow rate on the 7 Seg. display. */
 		if(s_displayCycle)
 		{
@@ -205,12 +203,8 @@ static int32_t onStateMaintenance(State_t* pState, int32_t eventID)
 		s_displayCycle ^= 1;
 	}
 
-	/* check for which button was pressed or if both were pressed at the same time */
-	if (buttonState_SW1 && buttonState_SW2)
-	{
-
-	}
-	else if (buttonState_SW1)
+	/* check for which button was pressed and increase/decrease the flow rate according to the pressed buttons */
+	if (buttonState_SW1)
 	{
 		/* Increasing the set flow rate if there is enough space from the upper Limit */
 		if (s_setFlowRate <= (MAX_FLOW_RATE - 5))
@@ -218,7 +212,7 @@ static int32_t onStateMaintenance(State_t* pState, int32_t eventID)
 			s_setFlowRate = s_setFlowRate + 5;
 		}
 	}
-	else if (buttonState_SW2)
+	if (buttonState_SW2)
 	{
 		/* Decreasing the set flow rate if there is enough space from the lower Limit */
 		if (s_setFlowRate >= (MIN_FLOW_RATE + 5))
