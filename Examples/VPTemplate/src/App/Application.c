@@ -37,6 +37,7 @@
 /***** PRIVATE MACROS ********************************************************/
 #define MAX_FLOW_RATE 80u
 #define MIN_FLOW_RATE 0u
+#define FLOW_RATE_STEP_SIZE 5u
 
 /***** PRIVATE TYPES *********************************************************/
 
@@ -207,17 +208,17 @@ static int32_t onStateMaintenance(State_t* pState, int32_t eventID)
 	if (buttonState_SW1)
 	{
 		/* Increasing the set flow rate if there is enough space from the upper Limit */
-		if (s_setFlowRate <= (MAX_FLOW_RATE - 5))
+		if (s_setFlowRate <= (MAX_FLOW_RATE - FLOW_RATE_STEP_SIZE))
 		{
-			s_setFlowRate = s_setFlowRate + 5;
+			s_setFlowRate = s_setFlowRate + FLOW_RATE_STEP_SIZE;
 		}
 	}
 	if (buttonState_SW2)
 	{
 		/* Decreasing the set flow rate if there is enough space from the lower Limit */
-		if (s_setFlowRate >= (MIN_FLOW_RATE + 5))
+		if (s_setFlowRate >= (MIN_FLOW_RATE + FLOW_RATE_STEP_SIZE))
 		{
-			s_setFlowRate = s_setFlowRate - 5;
+			s_setFlowRate = s_setFlowRate - FLOW_RATE_STEP_SIZE;
 		}
 
 	}
