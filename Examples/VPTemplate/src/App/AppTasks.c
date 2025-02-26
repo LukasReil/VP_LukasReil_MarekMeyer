@@ -22,6 +22,7 @@
 #include "Service/ADCService.h"
 #include "Service/ButtonService.h"
 #include "StackMonitoring.h"
+#include "Service/DisplayService.h"
 
 #include "LEDModule.h"
 
@@ -51,6 +52,7 @@ void taskApp10ms()
     readButtonB1();
     readButtonSW1();
     readButtonSW2();
+    showDisplayValue();
 }
 
 

@@ -25,8 +25,9 @@
 #include "UARTModule.h"
 #include "ButtonModule.h"
 #include "LEDModule.h"
-#include "DisplayModule.h"
+//#include "DisplayModule.h"
 #include "ButtonService.h"
+#include "DisplayService.h"
 
 #include "Util/StateTable/StateTable.h"
 
@@ -52,6 +53,10 @@ static int32_t onStateMaintenance(State_t* pState, int32_t eventID);
 /***** PRIVATE VARIABLES *****************************************************/
 static int8_t s_setFlowRate = -1;
 static uint8_t s_displayCycle = 0b1;
+
+
+
+
 /**
  * @brief List of State for the State Machine
  *
@@ -168,6 +173,12 @@ static int32_t onStateOperational(State_t* pState, int32_t eventID)
 
 static int32_t onStateMaintenance(State_t* pState, int32_t eventID)
 {
+	/* Display aus hinzufügen nach integration */
+	DisplayValues DispValues;
+	DispValues.RightDisplay = -1;
+	DispValues.LeftDisplay = -1;
+	static uint8_t flowRateTensDigit = 0;
+	static uint8_t flowRateOneDigit = 0;
 	/* calculating the Digits according to the flow rate */
 	uint8_t flowRateTensDigit = (s_setFlowRate / 10) % 10;
 	uint8_t flowRateOneDigit  = s_setFlowRate % 10;
@@ -179,29 +190,18 @@ static int32_t onStateMaintenance(State_t* pState, int32_t eventID)
 	/* check whether the flow rate is set or not. */
 	if(s_setFlowRate < 0)
 	{
-		/* showing the flow rate failure on the 7 Seg. display */
-		if(s_displayCycle)
-		{
-			displayShowDigit(LEFT_DISPLAY, DIGIT_DASH);
-		}
-		else
-		{
-			displayShowDigit(RIGHT_DISPLAY, DIGIT_DASH);
-		}
-		s_displayCycle ^= 1;
+		DispValues.RightDisplay = DIGIT_DASH;
+		DispValues.LeftDisplay = DIGIT_DASH;
+		setDisplayValue(DispValues);
 	}
 	else
 	{
-		/* showing the set flow rate on the 7 Seg. display. */
-		if(s_displayCycle)
-		{
-			displayShowDigit(LEFT_DISPLAY, flowRateTensDigit);
-		}
-		else
-		{
-			displayShowDigit(RIGHT_DISPLAY, flowRateOneDigit);
-		}
-		s_displayCycle ^= 1;
+		flowRateOneDigit = s_setFlowRate % 10;
+		flowRateTensDigit = s_setFlowRate / 10;
+		flowRateTensDigit = flowRateTensDigit % 10;
+		DispValues.RightDisplay = flowRateOneDigit;
+		DispValues.LeftDisplay = flowRateTensDigit;
+		setDisplayValue(DispValues);
 	}
 
 	/* check for which button was pressed and increase/decrease the flow rate according to the pressed buttons */
