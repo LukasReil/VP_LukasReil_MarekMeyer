@@ -52,7 +52,7 @@ static int32_t onStateMaintenance(State_t* pState, int32_t eventID);
 
 /***** PRIVATE VARIABLES *****************************************************/
 static int8_t s_setFlowRate = -1;
-static uint8_t s_displayCycle = 0b1;
+//static uint8_t s_displayCycle = 0b1;
 
 
 

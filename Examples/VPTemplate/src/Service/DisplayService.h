@@ -38,8 +38,14 @@ typedef struct _DisplayValues
 } DisplayValues;
 
 /***** PROTOTYPES ************************************************************/
-
+/**
+ * @brief function to set the internal Display Values
+ * @param DispValues struct to pass on the Display Values for both displays.
+ */
 void setDisplayValue(DisplayValues DispValues);
+/**
+ *  @brief function to show the set Display Values
+ */
 void showDisplayValue();
 
 
