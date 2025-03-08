@@ -314,13 +314,13 @@ static int32_t onStateMaintenance(State_t* pState, int32_t eventID)
 {
 	/* Display aus hinzufügen nach integration */
 	DisplayValues DispValues;
-	DispValues.RightDisplay = -1;
-	DispValues.LeftDisplay = -1;
+	DispValues.RightDisplay = DIGIT_OFF;
+	DispValues.LeftDisplay = DIGIT_OFF;
 	static uint8_t flowRateTensDigit = 0;
 	static uint8_t flowRateOneDigit = 0;
 	/* calculating the Digits according to the flow rate */
-	uint8_t flowRateTensDigit = (s_setFlowRate / 10) % 10;
-	uint8_t flowRateOneDigit  = s_setFlowRate % 10;
+	flowRateTensDigit = (s_setFlowRate / 10) % 10;
+	flowRateOneDigit  = s_setFlowRate % 10;
 
 	/* checking and saving whether the SW1 or/and Sw2 were pressed or not */
 	uint8_t buttonState_SW1 = wasButtonSW1Pressed();
@@ -336,8 +336,7 @@ static int32_t onStateMaintenance(State_t* pState, int32_t eventID)
 	else
 	{
 		flowRateOneDigit = s_setFlowRate % 10;
-		flowRateTensDigit = s_setFlowRate / 10;
-		flowRateTensDigit = flowRateTensDigit % 10;
+		flowRateTensDigit = (s_setFlowRate / 10) % 10;
 		DispValues.RightDisplay = flowRateOneDigit;
 		DispValues.LeftDisplay = flowRateTensDigit;
 		setDisplayValue(DispValues);
