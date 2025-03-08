@@ -1,30 +1,23 @@
 /******************************************************************************
- * @file AppTasks.c
+ * @file LEDService.c
  *
- * @author Andreas Schmidt (a.v.schmidt81@googlemail.com
  * @author Lukas Reil
- * @date   08.02.2025
+ * @date   08.03.2025
  *
  * @copyright Copyright (c) 2025
  *
  ******************************************************************************
  *
- * @brief Implementation File for the application tasks
- *
+ * @brief Service Layer Module for the LEDs
  *
  *****************************************************************************/
 
-
 /***** INCLUDES **************************************************************/
-#include "Scheduler.h"
-#include "Application.h"
-#include "AppTasks.h"
-#include "Service/ADCService.h"
-#include "Service/ButtonService.h"
-#include "StackMonitoring.h"
-#include "Service/DisplayService.h"
 
 #include "LEDService.h"
+
+
+
 
 
 /***** PRIVATE CONSTANTS *****************************************************/
@@ -41,35 +34,41 @@
 
 /***** PRIVATE VARIABLES *****************************************************/
 
+static LED_VALUE_t s_ledValues[LED4+1] = {0};
+
 
 /***** PUBLIC FUNCTIONS ******************************************************/
 
-
-void taskApp10ms()
+void updateLEDs()
 {
-    readPot1();
-    readPot2();
-    readButtonB1();
-    readButtonSW1();
-    readButtonSW2();
-    showDisplayValue();
-    updateLEDs();
+    static uint8_t s_blinkCounter = 0;
+    s_blinkCounter++;
+    if(s_blinkCounter >= LED_BLINK_HALF_PERIOD_CYCLES)
+    {
+        s_blinkCounter = 0;
+        for(uint8_t i = 0; i <= LED4; i++)
+        {
+            if(s_ledValues[i] == LED_BLINK)
+            {
+                ledToggleLED(i);
+            }
+        }
+    }
 }
 
-
-void taskApp50ms()
-{
-    appRunCyclic();
+void setLEDValue(LED_t led, uint8_t value){
+    if(led <= LED4)
+    {
+        s_ledValues[led] = value;
+        if(value == LED_ON)
+        {
+            ledSetLED(led, LED_ON);
+        }
+        else if(value == LED_OFF)
+        {
+            ledSetLED(led, LED_OFF);
+        }
+    }
 }
-
-void taskApp250ms()
-{
-    cyclic250ms_StackMonitoring();
-}
-
 
 /***** PRIVATE FUNCTIONS *****************************************************/
-
-
-
-
