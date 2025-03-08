@@ -26,7 +26,7 @@
 #include "UARTModule.h"
 #include "ButtonModule.h"
 #include "LEDModule.h"
-//#include "DisplayModule.h"
+
 #include "ButtonService.h"
 #include "ADCService.h"
 #include "DisplayService.h"
@@ -60,7 +60,6 @@ static int32_t getFlowRate();
 
 /***** PRIVATE VARIABLES *****************************************************/
 static int8_t s_setFlowRate = -1;
-static uint8_t s_displayCycle = 0;
 static uint8_t s_manualMotorOverride = 0;
 static int32_t s_ticksSinceOperationModeEntered = 0;
 static int32_t s_ticksSinceViolation = 0;
@@ -196,6 +195,10 @@ int32_t onEntryOperational(State_t *pState, int32_t eventID)
 
 static int32_t onStateOperational(State_t* pState, int32_t eventID)
 {
+	DisplayValues DispValues;
+	DispValues.RightDisplay = DIGIT_OFF;
+	DispValues.LeftDisplay = DIGIT_OFF;
+
 	s_ticksSinceOperationModeEntered++;
 	int32_t motorSpeed = getMotorSpeed();
 	int32_t flowRate = getFlowRate();
@@ -224,15 +227,9 @@ static int32_t onStateOperational(State_t* pState, int32_t eventID)
 
 	if(s_setFlowRate < 0)
 	{
-		if(s_displayCycle)
-		{
-			displayShowDigit(LEFT_DISPLAY, DIGIT_LOWER_O);
-		}
-		else
-		{
-			dislpayShowDigit(RIGHT_DISPLAY, DIGIT_LOWER_O);
-		}
-		s_displayCycle ^= 1;
+		DispValues.RightDisplay = DIGIT_LOWER_O;
+		DispValues.LeftDisplay = DIGIT_LOWER_O;
+		setDisplayValue(DispValues);
 		// Turn off the motor
 		s_motorState = 0;
 		ledSetLED(LED3, LED_OFF);
@@ -247,15 +244,9 @@ static int32_t onStateOperational(State_t* pState, int32_t eventID)
 	if(s_motorState > 0){
 		int8_t motorSpeed_10_2 = (motorSpeed / 100) % 10;
 		int8_t motorSpeed_10_1 = (motorSpeed / 10) % 10;
-		if(s_displayCycle)
-		{
-			displayShowDigit(LEFT_DISPLAY, motorSpeed_10_2);
-		}
-		else
-		{
-			displayShowDigit(RIGHT_DISPLAY, motorSpeed_10_1);
-		}
-		s_displayCycle ^= 1;
+		DispValues.RightDisplay = motorSpeed_10_1;
+		DispValues.LeftDisplay = motorSpeed_10_2;
+		setDisplayValue(DispValues);
 	}
 
 
@@ -314,13 +305,13 @@ static int32_t onStateMaintenance(State_t* pState, int32_t eventID)
 {
 	/* Display aus hinzufügen nach integration */
 	DisplayValues DispValues;
-	DispValues.RightDisplay = -1;
-	DispValues.LeftDisplay = -1;
+	DispValues.RightDisplay = DIGIT_OFF;
+	DispValues.LeftDisplay = DIGIT_OFF;
 	static uint8_t flowRateTensDigit = 0;
 	static uint8_t flowRateOneDigit = 0;
 	/* calculating the Digits according to the flow rate */
-	uint8_t flowRateTensDigit = (s_setFlowRate / 10) % 10;
-	uint8_t flowRateOneDigit  = s_setFlowRate % 10;
+	flowRateTensDigit = (s_setFlowRate / 10) % 10;
+	flowRateOneDigit  = s_setFlowRate % 10;
 
 	/* checking and saving whether the SW1 or/and Sw2 were pressed or not */
 	uint8_t buttonState_SW1 = wasButtonSW1Pressed();
@@ -336,8 +327,7 @@ static int32_t onStateMaintenance(State_t* pState, int32_t eventID)
 	else
 	{
 		flowRateOneDigit = s_setFlowRate % 10;
-		flowRateTensDigit = s_setFlowRate / 10;
-		flowRateTensDigit = flowRateTensDigit % 10;
+		flowRateTensDigit = (s_setFlowRate / 10) % 10;
 		DispValues.RightDisplay = flowRateOneDigit;
 		DispValues.LeftDisplay = flowRateTensDigit;
 		setDisplayValue(DispValues);
