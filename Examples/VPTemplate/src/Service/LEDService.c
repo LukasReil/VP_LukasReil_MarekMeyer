@@ -34,7 +34,7 @@
 
 /***** PRIVATE VARIABLES *****************************************************/
 
-static LED_VALUE_t s_ledValues[LED4+1] = {0};
+static LED_Value_t s_ledValues[LED4+1] = {0};
 
 
 /***** PUBLIC FUNCTIONS ******************************************************/
@@ -45,10 +45,10 @@ void updateLEDs()
     s_blinkCounter++;
     if(s_blinkCounter >= LED_BLINK_HALF_PERIOD_CYCLES)
     {
-        s_blinkCounter = 0;
+        s_blinkCounter -= LED_BLINK_HALF_PERIOD_CYCLES;
         for(uint8_t i = 0; i <= LED4; i++)
         {
-            if(s_ledValues[i] == LED_BLINK)
+            if(s_ledValues[i] == LED_BLINKING)
             {
                 ledToggleLED(i);
             }
@@ -56,15 +56,15 @@ void updateLEDs()
     }
 }
 
-void setLEDValue(LED_t led, uint8_t value){
+void setLEDValue(LED_t led, LED_Value_t value){
     if(led <= LED4)
     {
         s_ledValues[led] = value;
-        if(value == LED_ON)
+        if(value == LED_TURNED_ON)
         {
             ledSetLED(led, LED_ON);
         }
-        else if(value == LED_OFF)
+        else if(value == LED_TURNED_OFF)
         {
             ledSetLED(led, LED_OFF);
         }

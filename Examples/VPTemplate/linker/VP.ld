@@ -39,7 +39,7 @@ MEMORY
 }
 
 /* Heap and Stack Sizes */
-_size_of_stack = 0x200;                         /* Size of stack in bytes */
+_size_of_stack = 0x800;                         /* Size of stack in bytes */
 _size_of_heap  = 0x0;                           /* Size of heap in bytes */
 
 /* Highest usable address of the RAM. */

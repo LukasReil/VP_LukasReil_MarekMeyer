@@ -42,14 +42,14 @@ void initADCService();
 /**
  * @brief   Returns the value of the first potentiometer
  * 
- * @return  The value of the first potentiometer
+ * @return  The value of the first potentiometer in µV
  */
 int32_t getPot1Value();
 
 /**
  * @brief   Returns the value of the second potentiometer
  * 
- * @return  The value of the second potentiometer
+ * @return  The value of the second potentiometer in µV
  */
 int32_t getPot2Value();
 

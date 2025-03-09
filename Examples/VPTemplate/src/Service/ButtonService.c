@@ -33,7 +33,7 @@
  * @param   lastInputs  Array of last inputs
  * @param   output      Pointer to the output value 
  */
-void hysteresis(uint8_t input, uint8_t* lastInputs, uint8_t* output, uint8_t *outputChange);
+void hysteresis(uint8_t input, uint8_t* lastInputs, uint8_t* output, uint8_t *outputChangeRead);
 
 /***** PRIVATE VARIABLES *****************************************************/
 
@@ -125,7 +125,7 @@ void readButtonSW2()
 
 /***** PRIVATE FUNCTIONS *****************************************************/
 
-void hysteresis(uint8_t input, uint8_t *lastInputs, uint8_t *output, uint8_t *outputChange)
+void hysteresis(uint8_t input, uint8_t *lastInputs, uint8_t *output, uint8_t *outputChangeRead)
 {
     uint8_t sum = input;
     for(int i = BUTTON_FILTER_WINDOW_SIZE - 1; i > 0; i--)
@@ -138,10 +138,18 @@ void hysteresis(uint8_t input, uint8_t *lastInputs, uint8_t *output, uint8_t *ou
     // Only change the output if the last BUTTON_FILTER_WINDOW_SIZE inputs are the same
     if(sum == 0)
     {
+        if(*output == 1)
+        {
+            *outputChangeRead = 0;
+        }
         *output = 0;
     }
     else if(sum == BUTTON_FILTER_WINDOW_SIZE)
     {
+        if(*output == 0)
+        {
+            *outputChangeRead = 0;
+        }
         *output = 1;
     }
 }

@@ -54,6 +54,7 @@ void taskApp10ms()
     readButtonSW2();
     showDisplayValue();
     updateLEDs();
+
 }
 
 

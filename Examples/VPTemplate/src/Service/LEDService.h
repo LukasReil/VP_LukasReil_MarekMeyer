@@ -37,10 +37,10 @@
 
 typedef enum _LED_Value_t
 {
-    LED_ON  = GPIO_PIN_SET,             //!< Value to turn a LED on
-    LED_OFF = GPIO_PIN_RESET,           //!< Value to turn a LED off
-    LED_BLINK = 2,                      //!< Value to blink a LED
-} LED_VALUE_t;
+    LED_TURNED_ON  = LED_ON,             //!< Value to turn a LED on
+    LED_TURNED_OFF = LED_OFF,           //!< Value to turn a LED off
+    LED_BLINKING = 2,                      //!< Value to blink a LED
+} LED_Value_t;
 
 
 /***** PROTOTYPES ************************************************************/
@@ -56,7 +56,7 @@ void updateLEDs();
  * @param led   The LED to set the value for
  * @param value The value to set the LED to
  */
-void setLEDValue(LED_t led, uint8_t value);
+void setLEDValue(LED_t led, LED_Value_t value);
 
 
 

@@ -62,9 +62,6 @@ LoopFillZerobss:
   bcc FillZerobss
 
 LoopCopyDataInitStack:
-  adds r4, r0, r3
-  cmp r4, r1
-  bcc CopyDataInit
   ldr r2, = _top_of_stack
   ldr r4, = _bottom_of_stack
 
