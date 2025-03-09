@@ -179,10 +179,9 @@ static int32_t onEntryFailure(State_t* pState, int32_t eventID)
     }
     else
     {
-        ledSetLED(LED0, LED_OFF);
-        ledSetLED(LED2, LED_ON);
-		ledSetLED(LED3, LED_OFF);
-        ledSetLED(LED4, LED_OFF);
+		setLEDValue(LED0, LED_TURNED_OFF);
+		setLEDValue(LED2, LED_TURNED_ON);
+		setLEDValue(LED4, LED_TURNED_OFF);
     }
 
     return STATETBL_ERR_OK;
@@ -354,14 +353,23 @@ static int32_t onStateOperational(State_t* pState, int32_t eventID)
     return STATETBL_ERR_OK;
 }
 
+static void clutterStack()
+{
+	int32_t stack[8000];
+	for(int i = 0; i < 8000; i++)
+	{
+		stack[i] = i;
+	}
+}
+
 /**
  * @brief function to set and show the flow rate
  * @details This function can set the flow rate using the SW1 and SW2 buttons
  * It can also show the selected value and initiate the switch to the Operation Mode
  * @param pState: Pointer to pass on the current state of the State machine
  * @param enventID: variable to notify the function from which state it was called.
- * **/
-
+ * 
+**/
 static int32_t onStateMaintenance(State_t* pState, int32_t eventID)
 {
 	/* Display aus hinzufügen nach integration */
@@ -417,6 +425,11 @@ static int32_t onStateMaintenance(State_t* pState, int32_t eventID)
 	if (wasButtonB1Pressed())
 	{
 		appSendEvent(EVT_ID_EVENT_MAINTENANCE);
+	}
+
+	if(getButtonSW1Value() && getButtonSW2Value())
+	{
+		clutterStack();
 	}
 
     return STATETBL_ERR_OK;
