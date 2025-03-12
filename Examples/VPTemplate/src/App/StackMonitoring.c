@@ -21,7 +21,7 @@ void initMemoryChecker()
 void cyclic250ms_StackMonitoring()
 {
 	uint32_t freeBytes = getFreeBytes();
-	outputLogf("Free bytes: %d\n", freeBytes);
+	outputLogf("Free bytes: %d\n\r", freeBytes);
 
 	if(getStackValidity() != 1){
 		appSendEvent(EVT_ID_STACK_OVERFLOW);

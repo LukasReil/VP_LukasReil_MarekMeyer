@@ -33,6 +33,10 @@
 
 #include "Util/StateTable/StateTable.h"
 
+#if LOG_OUTPUT_ENABLED
+#include "LogOutput.h"
+#endif // LOG_OUTPUT_ENABLED
+
 
 /***** PRIVATE CONSTANTS *****************************************************/
 
@@ -56,6 +60,7 @@ static int32_t onEntryBootup(State_t* pState, int32_t eventID);
 static int32_t onEntryFailure(State_t* pState, int32_t eventID);
 static int32_t onEntryOperational(State_t* pState, int32_t eventID);
 static int32_t onStateOperational(State_t* pState, int32_t eventID);
+static int32_t onEntryMaintenance(State_t* pState, int32_t eventID);
 static int32_t onStateMaintenance(State_t* pState, int32_t eventID);
 
 static int32_t getMotorSpeed();
@@ -91,7 +96,7 @@ static State_t gStateList[] =
 {
     {STATE_ID_BOOTUP,       onEntryBootup,  	0,                  0,  false},
     {STATE_ID_FAILURE,      onEntryFailure, 	0,                  0,  false},
-    {STATE_ID_MAINTENANCE,  0,              	onStateMaintenance, 0,  false},
+    {STATE_ID_MAINTENANCE,  onEntryMaintenance, onStateMaintenance, 0,  false},
     {STATE_ID_OPERATIONAL,  onEntryOperational, onStateOperational, 0,  false},
 };
 
@@ -181,6 +186,7 @@ static int32_t onEntryFailure(State_t* pState, int32_t eventID)
     {
 		setLEDValue(LED0, LED_TURNED_OFF);
 		setLEDValue(LED2, LED_TURNED_ON);
+		setLEDValue(LED3, LED_TURNED_OFF);
 		setLEDValue(LED4, LED_TURNED_OFF);
     }
 
@@ -191,6 +197,7 @@ int32_t onEntryOperational(State_t *pState, int32_t eventID)
 {
 	s_ticksSinceOperationModeEntered = 0;
 	s_manualMotorOverride = 0;
+	s_motorState = 0;
 	setLEDValue(LED0, LED_TURNED_ON);
 	setLEDValue(LED1, LED_TURNED_OFF);
 	setLEDValue(LED2, LED_TURNED_OFF);
@@ -284,6 +291,7 @@ static int32_t onStateOperational(State_t* pState, int32_t eventID)
 
 		uint8_t monitoringViolation = 0;
 		if(s_ticksSinceViolation >= TICKS_UNTIL_VIOLATION_DISPLAY){
+
 			monitoringViolation = 1;
 		}
 
@@ -362,6 +370,13 @@ static void clutterStack()
 	}
 }
 
+static int32_t onEntryMaintenance(State_t* pState, int32_t eventID)
+{
+	setLEDValue(LED0, LED_BLINKING);
+	setLEDValue(LED3, LED_TURNED_OFF);
+	return STATETBL_ERR_OK;
+}
+
 /**
  * @brief function to set and show the flow rate
  * @details This function can set the flow rate using the SW1 and SW2 buttons
@@ -372,7 +387,6 @@ static void clutterStack()
 **/
 static int32_t onStateMaintenance(State_t* pState, int32_t eventID)
 {
-	/* Display aus hinzufügen nach integration */
 	DisplayValues DispValues;
 	DispValues.RightDisplay = DIGIT_OFF;
 	DispValues.LeftDisplay = DIGIT_OFF;
@@ -392,6 +406,10 @@ static int32_t onStateMaintenance(State_t* pState, int32_t eventID)
 		DispValues.RightDisplay = DIGIT_DASH;
 		DispValues.LeftDisplay = DIGIT_DASH;
 		setDisplayValue(DispValues);
+	}
+	else if (s_setFlowRate % 5 != 0)
+	{
+		s_setFlowRate = 0;
 	}
 	else
 	{
@@ -424,12 +442,21 @@ static int32_t onStateMaintenance(State_t* pState, int32_t eventID)
 	/* check whether the Button 1 was pressed and the system shall switch to the Operation state */
 	if (wasButtonB1Pressed())
 	{
-		appSendEvent(EVT_ID_EVENT_MAINTENANCE);
+		return appSendEvent(EVT_ID_EVENT_MAINTENANCE);
 	}
 
 	if(getButtonSW1Value() && getButtonSW2Value())
 	{
 		clutterStack();
+	}
+
+	if (getMotorSpeed() < 0 || getFlowRate() < 0)
+	{
+		setLEDValue(LED4, LED_TURNED_ON);
+	}
+	else
+	{
+		setLEDValue(LED4, LED_TURNED_OFF);
 	}
 
     return STATETBL_ERR_OK;
