@@ -112,6 +112,8 @@ typedef struct _StateTable
     State_t *pCurrentStateRef;              //!< Pointer to the current state object
 
     int32_t pendingEvent;                   //!< Current pending event
+
+    int32_t lastHandledEvent;               //!< Last handled event
 } StateTable_t;
 
 

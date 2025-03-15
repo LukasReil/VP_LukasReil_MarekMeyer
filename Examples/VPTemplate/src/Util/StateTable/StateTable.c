@@ -17,9 +17,6 @@
 #include "StateTable.h"
 #include "Global.h"
 
-#if LOG_OUTPUT_ENABLED
-#include "LogOutput.h"
-#endif // LOG_OUTPUT_ENABLED
 
 
 /***** PRIVATE CONSTANTS *****************************************************/
@@ -79,7 +76,7 @@ int32_t stateTableInitialize(StateTable_t* pStateTable, StateTableEntry_t* pTabl
 
 int32_t stateTableRunCyclic(StateTable_t* pStateTable)
 {
-    static int32_t lastHandledEvent = STT_NONE_EVENT;
+    pStateTable->lastHandledEvent = STT_NONE_EVENT;
     int32_t result = STATETBL_ERR_EVENT_UNHANDLED;
 
     // Get the current pending event and reset it in the table
@@ -121,15 +118,13 @@ int32_t stateTableRunCyclic(StateTable_t* pStateTable)
                         pEntry->pFromStateRef->onEntryCalled = false;
                     }
 
-#if LOG_OUTPUT_ENABLED
-                    outputLogf("State Transition from %d to %d with event %d\n\r", pStateTable->currentStateID, pEntry->stateIDTo, currentEvent);
-#endif
+                    DEBUG_LOGF("State Transition from %d to %d with event %d\n\r", pStateTable->currentStateID, pEntry->stateIDTo, currentEvent);
 
                     // Perform the transition
                     pStateTable->previousStateID    = pStateTable->currentStateID;
                     pStateTable->currentStateID     = pEntry->stateIDTo;
                     pStateTable->pCurrentStateRef   = pEntry->pToStateRef;
-                    lastHandledEvent                = currentEvent;
+                    pStateTable->lastHandledEvent   = currentEvent;
 
                     // On Entry will be called in the normal cycle
 
@@ -150,14 +145,14 @@ int32_t stateTableRunCyclic(StateTable_t* pStateTable)
             // Check for onEntry call
             if (pCurrentState->pOnEntry != 0 && pCurrentState->onEntryCalled == false)
             {
-                pCurrentState->pOnEntry(pCurrentState, lastHandledEvent);
+                pCurrentState->pOnEntry(pCurrentState, pStateTable->lastHandledEvent);
                 pCurrentState->onEntryCalled = true;
             }
 
             // Now call the cyclic function
             if (pCurrentState->pOnState != 0)
             {
-                pCurrentState->pOnState(pCurrentState, lastHandledEvent);
+                pCurrentState->pOnState(pCurrentState, pStateTable->lastHandledEvent);
             }
         }
     }

@@ -61,7 +61,7 @@ static Scheduler gScheduler;            // Global Scheduler instance
 int main(void)
 {
     // Initialize the HAL
-    HAL_Init();
++    HAL_Init();
 
     SystemClock_Config();
 
