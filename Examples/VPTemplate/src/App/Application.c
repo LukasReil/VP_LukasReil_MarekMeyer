@@ -464,9 +464,18 @@ static void clutterStack()
 	}
 }
 
+/**
+ * @brief entry function for the Maintenance state.
+ * @param pState: Pointer to pass on the current state of the State machine
+ * @param enventID: variable to notify the function from which state it was called.
+ * @return STATETBL_ERR_OK: If everything went fine.
+ **/
+
 static int32_t onEntryMaintenance(State_t* pState, int32_t eventID)
 {
 	setLEDValue(LED0, LED_BLINKING);
+	setLEDValue(LED1, LED_TURNED_OFF);
+	setLEDValue(LED2, LED_TURNED_OFF);
 	setLEDValue(LED3, LED_TURNED_OFF);
 	return STATETBL_ERR_OK;
 }
