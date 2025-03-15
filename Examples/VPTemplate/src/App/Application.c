@@ -113,17 +113,12 @@ static int8_t s_setFlowRate = -1;
 static uint8_t s_manualMotorOverride = 0;
 static int32_t s_ticksSinceOperationModeEntered = 0;
 static int32_t s_ticksSinceViolation = 0;
-//0: off, 1: on, 2: flashing
-static MotorState s_motorState = MOTOR_OFF;
 
-//0: off, 1: on
-static uint8_t s_sensorLedStatus = 0;
+static MotorState s_motorState = MOTOR_OFF;
 
 static MonitoringViolation s_motorWarningState = 0;
 
 
-
-//static uint8_t s_displayCycle = 0b1;
 
 
 
@@ -351,12 +346,15 @@ static int32_t onStateOperational(State_t* pState, int32_t eventID)
 	static int32_t motorSpeedLimit2ViolationCounter = 0;
 	static int32_t motorSpeedLimit2HysteresisThresholdCounter = 0;
 
+	static int32_t lastMotorSpeedViolation = -1;
+
 	if(s_motorState != MOTOR_OFF && !s_manualMotorOverride)
 	{
 		for (size_t i = 0; i <= motorRangeViolationCheckSize; i++)
 		{
 			if(i == motorRangeViolationCheckSize)
 			{
+				lastMotorSpeedViolation = -1;
 				s_ticksSinceViolation = 0;
 				break;
 			}
@@ -366,7 +364,11 @@ static int32_t onStateOperational(State_t* pState, int32_t eventID)
 				{
 					s_ticksSinceViolation = 0;
 				} else {
-					DEBUG_LOGF("Flow rate violation detected: %d rpm, %d l/h\n\r", motorSpeed, flowRate);
+					if(lastMotorSpeedViolation != i)
+					{
+						DEBUG_LOGF("Flow rate violation detected: %d rpm, %d l/h\n\r", motorSpeed, flowRate);
+					}
+					lastMotorSpeedViolation = i;
 					s_ticksSinceViolation++;
 				}
 				break;
@@ -380,11 +382,17 @@ static int32_t onStateOperational(State_t* pState, int32_t eventID)
 		}
 
 		if(motorSpeed > MOTOR_SPEED_LIMIT_2){
-			DEBUG_LOGF("Motor speed exceedes Limit 2: %d rpm\n\r", motorSpeed);
+			if(motorSpeedLimit2ViolationCounter == 0)
+			{
+				DEBUG_LOGF("Motor speed exceedes Limit 2: %d rpm\n\r", motorSpeed);
+			}
 			motorSpeedLimit1ViolationCounter++;
 			motorSpeedLimit2ViolationCounter++;
 		} else if(motorSpeed > MOTOR_SPEED_LIMIT_1){
-			DEBUG_LOGF("Motor speed exceedes Limit 1: %d rpm\n\r", motorSpeed);
+			if(motorSpeedLimit1ViolationCounter == 0)
+			{
+				DEBUG_LOGF("Motor speed exceedes Limit 1: %d rpm\n\r", motorSpeed);
+			}
 			motorSpeedLimit2ViolationCounter = 0;
 			motorSpeedLimit1ViolationCounter++;
 		} else {
@@ -548,22 +556,34 @@ static int32_t onStateMaintenance(State_t* pState, int32_t eventID)
 
 int32_t getMotorSpeed()
 {
+	static uint8_t wasViolatedLastTime = false;
 	int32_t voltage = getPot1Value();
 	if(voltage < SENSOR_MIN_VOLTAGE || voltage > SENSOR_MAX_VOLTAGE)
 	{
-		DEBUG_LOGF("Invalid voltage on motor speed sensor: %d\n\r", voltage);
+		if(!wasViolatedLastTime)
+		{
+			DEBUG_LOGF("Invalid voltage on motor speed sensor: %d\n\r", voltage);
+		}
+		wasViolatedLastTime = true;
 		return -1;
 	}
+	wasViolatedLastTime = false;
     return (voltage - SENSOR_MIN_VOLTAGE) / RPM_PER_MICROVOLT;
 }
 
 int32_t getFlowRate()
 {
+	static uint8_t wasViolatedLastTime = false;
 	int32_t voltage = getPot2Value();
 	if(voltage < SENSOR_MIN_VOLTAGE || voltage > SENSOR_MAX_VOLTAGE)
 	{
-		DEBUG_LOGF("Invalid voltage on flow rate sensor: %d\n\r", voltage);
+		if(!wasViolatedLastTime)
+		{
+			DEBUG_LOGF("Invalid voltage on flow rate sensor: %d\n\r", voltage);
+		}
+		wasViolatedLastTime = true;
 		return -1;
 	}
+	wasViolatedLastTime = false;
     return (voltage - SENSOR_MIN_VOLTAGE) / FLOW_PER_MICROVOLT;
 }

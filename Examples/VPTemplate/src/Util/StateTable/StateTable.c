@@ -67,6 +67,8 @@ int32_t stateTableInitialize(StateTable_t* pStateTable, StateTableEntry_t* pTabl
 
     pStateTable->currentStateID         = initStateID;
     pStateTable->previousStateID        = STT_UNKNOWN_STATE;
+    pStateTable->pendingEvent           = STT_NONE_EVENT;
+    pStateTable->lastHandledEvent       = STT_NONE_EVENT;
 
     stateTableFindState(pStateTable, pStateTable->currentStateID, &(pStateTable->pCurrentStateRef));
 
@@ -76,7 +78,6 @@ int32_t stateTableInitialize(StateTable_t* pStateTable, StateTableEntry_t* pTabl
 
 int32_t stateTableRunCyclic(StateTable_t* pStateTable)
 {
-    pStateTable->lastHandledEvent = STT_NONE_EVENT;
     int32_t result = STATETBL_ERR_EVENT_UNHANDLED;
 
     // Get the current pending event and reset it in the table
