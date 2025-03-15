@@ -24,6 +24,11 @@
 
 /***** MACROS ****************************************************************/
 
+
+#define ERROR_OK            0       //!< Error code for "everything is ok"
+ 
+#define ERROR_GENERAL       -1      //!< General, unspecific error
+
 #define LOG_OUTPUT_ENABLED  1       //!< Enable log output
 
 
