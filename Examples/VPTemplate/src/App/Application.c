@@ -145,11 +145,55 @@ static const size_t motorRangeViolationCheckSize = sizeof(motorRangeViolationChe
 
 /***** PRIVATE PROTOTYPES ****************************************************/
 // State realte functions (on-Entry, on-State and on-Exit)
+
+/**
+ * @brief entry function for the Bootup state.
+ * @param pState: Pointer to pass on the current state of the State machine
+ * @param enventID: variable to notify the function from which state it was called.
+ * @return STATETBL_ERR_OK: If everything went fine.
+ */
 static int32_t onEntryBootup(State_t* pState, int32_t eventID);
+
+/**
+ * @brief entry function for the Failure state. Turns on the LEDs depending on the eventID
+ * @param pState: Pointer to pass on the current state of the State machine
+ * @param enventID: variable to notify the function from which state it was called.
+ * @return STATETBL_ERR_OK: If everything went fine.
+ */
 static int32_t onEntryFailure(State_t* pState, int32_t eventID);
+
+/**
+ * @brief entry function for the Operational state. Turns on the LED0 and sets the motor state to off
+ * @param pState: Pointer to pass on the current state of the State machine
+ * @param enventID: variable to notify the function from which state it was called.
+ * @return STATETBL_ERR_OK: If everything went fine.
+ */
 static int32_t onEntryOperational(State_t* pState, int32_t eventID);
+
+/**
+ * @brief function for the Operational state. Checks the motor speed and flow rate and sets the LEDs accordingly
+ * @param pState: Pointer to pass on the current state of the State machine
+ * @param enventID: variable to notify the function from which state it was called.
+ * @return STATETBL_ERR_OK: If everything went fine.
+ */
 static int32_t onStateOperational(State_t* pState, int32_t eventID);
+
+/**
+ * @brief entry function for the Maintenance state.
+ * @param pState: Pointer to pass on the current state of the State machine
+ * @param enventID: variable to notify the function from which state it was called.
+ * @return STATETBL_ERR_OK: If everything went fine.
+ **/
 static int32_t onEntryMaintenance(State_t* pState, int32_t eventID);
+
+/**
+ * @brief function to set and show the flow rate
+ * @details This function can set the flow rate using the SW1 and SW2 buttons
+ * It can also show the selected value and initiate the switch to the Operation Mode
+ * @param pState: Pointer to pass on the current state of the State machine
+ * @param enventID: variable to notify the function from which state it was called.
+ * 
+**/
 static int32_t onStateMaintenance(State_t* pState, int32_t eventID);
 
 
@@ -549,14 +593,7 @@ static int32_t onEntryMaintenance(State_t* pState, int32_t eventID)
 	return STATETBL_ERR_OK;
 }
 
-/**
- * @brief function to set and show the flow rate
- * @details This function can set the flow rate using the SW1 and SW2 buttons
- * It can also show the selected value and initiate the switch to the Operation Mode
- * @param pState: Pointer to pass on the current state of the State machine
- * @param enventID: variable to notify the function from which state it was called.
- * 
-**/
+
 static int32_t onStateMaintenance(State_t* pState, int32_t eventID)
 {
 	DisplayValues DispValues;
