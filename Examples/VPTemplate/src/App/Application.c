@@ -543,6 +543,8 @@ static void clutterStack()
 static int32_t onEntryMaintenance(State_t* pState, int32_t eventID)
 {
 	setLEDValue(LED0, LED_BLINKING);
+	setLEDValue(LED1, LED_TURNED_OFF);
+	setLEDValue(LED2, LED_TURNED_OFF);
 	setLEDValue(LED3, LED_TURNED_OFF);
 	return STATETBL_ERR_OK;
 }
