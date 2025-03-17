@@ -11,24 +11,30 @@
 #include "LogOutput.h"
 #include "Application.h"
 
+#include "Global.h"
+
 /***** PUBLIC FUNCTIONS ******************************************************/
 
-void initMemoryChecker()
-{
-
-}
+// Return value for failed stack check
+const int32_t STACK_CHECK_FAILED = -1; 
 
 void cyclic250ms_StackMonitoring()
 {
-	uint32_t freeBytes = getFreeBytes();
-	outputLogf("Free bytes: %d\n\r", freeBytes);
+	int32_t freeBytes = getFreeBytes();
+	if(freeBytes == STACK_CHECK_FAILED)
+	{
+		outputLogf("Stack check failed\n\r");
+	} else {
+		outputLogf("Free bytes: %d\n\r", freeBytes);
+	}
 
 	if(getStackValidity() != 1){
+		DEBUG_LOG("Stack is invalid\n\r");
 		appSendEvent(EVT_ID_STACK_OVERFLOW);
 	}
 }
 
-uint32_t getFreeBytes()
+int32_t getFreeBytes()
 {
 	uint32_t *pCurrentStackPosition = &_top_of_stack + 4;
 	uint32_t *pEndOfStack = &_bottom_of_stack;
@@ -36,7 +42,7 @@ uint32_t getFreeBytes()
 
 	if (pCurrentStackPosition == 0 || pEndOfStack == 0)
 	{
-		return -1;
+		return STACK_CHECK_FAILED;
 	}
 
 	for (; pCurrentStackPosition != pEndOfStack; pCurrentStackPosition++)
@@ -59,6 +65,7 @@ uint8_t getStackValidity()
 	{
 		return 0;
 	}
+
 	if (*pTopOfStack == 0xABABABAB)
 	{
 		return 1;

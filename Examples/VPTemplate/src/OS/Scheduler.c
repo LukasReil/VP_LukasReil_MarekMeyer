@@ -57,7 +57,7 @@ int32_t schedInitialize(Scheduler* pScheduler)
         return SCHED_ERR_INVALID_PTR;
     }
 
-    uint32_t beginTickTime      = pScheduler->pGetHALTick();
+    uint32_t beginTickTime = pScheduler->pGetHALTick();
     for(uint32_t i = 0; i < pScheduler->registeredTaskCount; i++){
         pScheduler->tasks[i].lastExecution = beginTickTime;
     }
@@ -93,7 +93,7 @@ int32_t registerHALTickFunction(Scheduler* pScheduler, GetHALTick halTickFunctio
     if(pScheduler == 0){
         return SCHED_ERR_INVALID_PTR;
     }
-    if(isCyclicFunctionValid(halTickFunction) != FUNC_VALID){
+    if(isCyclicFunctionValid((CyclicFunction) halTickFunction) != FUNC_VALID){
         return SCHED_ERR_INVALID_FUNC_PTR;
     }
 
@@ -126,7 +126,7 @@ int32_t registerTask(Scheduler *pScheduler, uint32_t period, CyclicFunction toRe
 
 static uint8_t isCyclicFunctionValid(CyclicFunction toCheckFunction)
 {
-    if(&_stext <= toCheckFunction && toCheckFunction <= &_etext){
+    if((uint32_t) &_stext <= (uint32_t) toCheckFunction && (uint32_t) toCheckFunction <= (uint32_t) &_etext){
         return FUNC_VALID;
     }
 

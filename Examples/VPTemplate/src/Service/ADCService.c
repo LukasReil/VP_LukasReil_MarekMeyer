@@ -75,12 +75,12 @@ int32_t getPot2Value()
 
 void readPot1()
 {
-    static int32_t lastOutput = 0;
+    static int32_t pot1LastOutput = 0;
     int32_t adcValue = adcReadChannel(ADC_INPUT0);
     // filteredValue = adcValue * alpha + (1 - alpha) * lastFilteredValue = adcValue / (1 / alpha) + (1 - 1 / (1 / alpha)) * lastFilteredValue = adcValue / (1 / alpha) + (lastFilteredValue - lastFilteredValue / (1 / alpha))
-    // With 1 / alpha = POT1_EMA_ALPHA_INV => filteredValue = adcValue / POT1_EMA_ALPHA_INV + (lastFilteredValue - lastFilteredValue / POT1_EMA_ALPHA_INV)
-    lastOutput = adcValue / POT1_EMA_ALPHA_INV + (lastOutput - lastOutput / POT1_EMA_ALPHA_INV);
-    s_pot1Value = lastOutput;
+    // With 1 / alpha = POT1_EMA_ALPHA_INV => filteredValue = adcValue / POT1_EMA_ALPHA_INV + (lastFilteredValue - lastFilteredValue / POT1_EMA_ALPHA_INV) = lastFilteredValue + (adcValue - lastFilteredValue) / POT1_EMA_ALPHA_INV
+    pot1LastOutput = pot1LastOutput + (adcValue - pot1LastOutput) / POT1_EMA_ALPHA_INV;
+    s_pot1Value = pot1LastOutput;
 }
 
 void readPot2()

@@ -16,6 +16,9 @@
 
 /***** PRIVATE CONSTANTS *****************************************************/
 
+// Size of the filter window = 50ms Debounce time / 10ms Task cycle time = 5
+//static const uint16_t BUTTON_FILTER_WINDOW_SIZE = 5;
+#define BUTTON_FILTER_WINDOW_SIZE 5
 
 /***** PRIVATE MACROS ********************************************************/
 
@@ -33,7 +36,7 @@
  * @param   lastInputs  Array of last inputs
  * @param   output      Pointer to the output value 
  */
-void hysteresis(uint8_t input, uint8_t* lastInputs, uint8_t* output, uint8_t *outputChangeRead);
+static void hysteresis(uint8_t input, uint8_t* lastInputs, uint8_t* output, uint8_t *outputChangeRead);
 
 /***** PRIVATE VARIABLES *****************************************************/
 
@@ -125,7 +128,7 @@ void readButtonSW2()
 
 /***** PRIVATE FUNCTIONS *****************************************************/
 
-void hysteresis(uint8_t input, uint8_t *lastInputs, uint8_t *output, uint8_t *outputChangeRead)
+static void hysteresis(uint8_t input, uint8_t *lastInputs, uint8_t *output, uint8_t *outputChangeRead)
 {
     uint8_t sum = input;
     for(int i = BUTTON_FILTER_WINDOW_SIZE - 1; i > 0; i--)

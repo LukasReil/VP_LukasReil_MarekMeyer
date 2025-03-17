@@ -37,6 +37,50 @@
 
 
 
+/***** PRIVATE MACROS ********************************************************/
+
+#define GET_HUNDREDS_DIGIT(x) (((x) / 100) % 10)
+#define GET_TENS_DIGIT(x) (((x) / 10) % 10)
+#define GET_ONES_DIGIT(x) ((x) % 10)
+
+
+/***** PRIVATE TYPES *********************************************************/
+
+/**
+ * @brief Enumeration to track monitoring violations
+ */
+typedef enum {
+	NO_MONITORING_VIOLATION = 0,
+	MONITORING_VIOLATION = 1,
+	CRITICAL_MONITORING_VIOLATION = 2,
+} MonitoringViolation;
+
+/**
+ * @brief Enumeration to track the state of the motor
+ */
+typedef enum {
+	MOTOR_OFF = 0,
+	MOTOR_ON = 1,
+} MotorState;
+
+/**
+ * @brief Function pointer type for the motor range check
+ */
+typedef uint8_t (*MotorRangeCheck)(int32_t);
+/**
+ * @brief Function pointer type for the motor speed violation check
+ */
+typedef uint8_t (*MotorSpeedViolationCheck)(int32_t);
+
+/**
+ * @brief Structure to hold the function pointers for the motor range and speed violation checks
+ */
+typedef struct {
+	MotorRangeCheck motorRangeCheck;
+	MotorSpeedViolationCheck motorSpeedViolationCheck;
+} MotorRangeViolationCheck;
+
+
 /***** PRIVATE CONSTANTS *****************************************************/
 
 static const int32_t TICKS_FOR_1_SECOND = 20;
@@ -76,25 +120,28 @@ static const int32_t MOTOR_SPEED_LIMIT_1_WARNING_RESOLVE = 650;
 static const int32_t MOTOR_SPEED_LIMIT_2 = 900;
 static const int32_t MOTOR_SPEED_LIMIT_2_WARNING_RESOLVE = 800;
 
-/***** PRIVATE MACROS ********************************************************/
+static const int8_t INVALID_FLOW_RATE = -1;
 
-#define GET_HUNDREDS_DIGIT(x) (((x) / 100) % 10)
-#define GET_TENS_DIGIT(x) (((x) / 10) % 10)
-#define GET_ONES_DIGIT(x) ((x) % 10)
+// Function prototypes for the motor range and speed violation checks
+static uint8_t motorRange0(int32_t motorSpeed);
+static uint8_t motorRange1(int32_t motorSpeed);
+static uint8_t motorRange2(int32_t motorSpeed);
+static uint8_t motorRange3(int32_t motorSpeed);
+
+static uint8_t motorSpeedViolation0(int32_t flowRate);
+static uint8_t motorSpeedViolation1(int32_t flowRate);
+static uint8_t motorSpeedViolation2(int32_t flowRate);
+static uint8_t motorSpeedViolation3(int32_t flowRate);
+
+static const MotorRangeViolationCheck motorRangeViolationCheck[] = {
+	{motorRange0, motorSpeedViolation0},
+	{motorRange1, motorSpeedViolation1},
+	{motorRange2, motorSpeedViolation2},
+	{motorRange3, motorSpeedViolation3}
+};
 
 
-/***** PRIVATE TYPES *********************************************************/
-
-typedef enum {
-	NO_MONITORING_VIOLATION = 0,
-	MONITORING_VIOLATION = 1,
-	CRITICAL_MONITORING_VIOLATION = 2,
-} MonitoringViolation;
-
-typedef enum {
-	MOTOR_OFF = 0,
-	MOTOR_ON = 1,
-} MotorState;
+static const size_t motorRangeViolationCheckSize = sizeof(motorRangeViolationCheck) / sizeof(MotorRangeViolationCheck);
 
 /***** PRIVATE PROTOTYPES ****************************************************/
 // State realte functions (on-Entry, on-State and on-Exit)
@@ -105,18 +152,52 @@ static int32_t onStateOperational(State_t* pState, int32_t eventID);
 static int32_t onEntryMaintenance(State_t* pState, int32_t eventID);
 static int32_t onStateMaintenance(State_t* pState, int32_t eventID);
 
+
+/**
+ * @brief Checks the motor speed for violations, implements a hysteresis according to requirements on page 13
+ * 
+ * @param motorSpeed 	the motor speed in rpm
+ * @return MonitoringViolation 	the violation state
+ */
+static MonitoringViolation checkMotorSpeed(int32_t motorSpeed);
+
+/**
+ * @brief Checks the relation between motor speed and flow rate for violations according to requirements on page 14
+ * 
+ * @param motorSpeed 	the motor speed in rpm
+ * @param flowRate 		the flow rate in l/h
+ * @return MonitoringViolation 	the violation state
+ */
+static MonitoringViolation checkMotorSpeedFlowRateRelation(int32_t motorSpeed, int32_t flowRate);
+
+/**
+ * @brief Reads the ADC value of the motor speed sensor and converts it to rpm
+ * 
+ * @return 	the motor speed in rpm
+ * 			-1 if the sensor value is out of range
+ */
 static int32_t getMotorSpeed();
+
+/**
+ * @brief Reads the ADC value of the flow rate sensor and converts it to l/h
+ * 
+ * @return 	the flow rate in l/h
+ * 			-1 if the sensor value is out of range
+ */
 static int32_t getFlowRate();
 
+/**
+ * @brief Clutters the stack with a local variable and thus causes a stack corruption
+ */
+static void clutterStack();
+
 /***** PRIVATE VARIABLES *****************************************************/
-static int8_t s_setFlowRate = -1;
+static int8_t s_setFlowRate = INVALID_FLOW_RATE;
 static uint8_t s_manualMotorOverride = 0;
 static int32_t s_ticksSinceOperationModeEntered = 0;
 static int32_t s_ticksSinceViolation = 0;
 
 static MotorState s_motorState = MOTOR_OFF;
-
-static MonitoringViolation s_motorWarningState = 0;
 
 
 
@@ -145,7 +226,7 @@ static State_t gStateList[] =
  * The last two members of a transistion row are only the initialization of dynamic
  * members used durin runtim
  */
-static StateTableEntry_t gStateTableEntries[] =
+static StateTableEntry_t s_stateTableEntries[] =
 {
     {STATE_ID_BOOTUP,          STATE_ID_OPERATIONAL,           EVT_ID_SYSTEM_OK,          0,      0,      0},
     {STATE_ID_BOOTUP,          STATE_ID_FAILURE,               EVT_ID_SENSOR_FAILURE,     0,      0,      0},
@@ -169,7 +250,7 @@ int32_t appInitialize()
 {
     gStateTable.pStateList = gStateList;
     gStateTable.stateCount = sizeof(gStateList) / sizeof(State_t);
-    int32_t result = stateTableInitialize(&gStateTable, gStateTableEntries, sizeof(gStateTableEntries) / sizeof(StateTableEntry_t), STATE_ID_BOOTUP);
+    int32_t result = stateTableInitialize(&gStateTable, s_stateTableEntries, sizeof(s_stateTableEntries) / sizeof(StateTableEntry_t), STATE_ID_BOOTUP);
 
     return result;
 }
@@ -244,55 +325,121 @@ int32_t onEntryOperational(State_t *pState, int32_t eventID)
 	return STATETBL_ERR_OK;
 }
 
-typedef uint8_t (*MotorRangeCheck)(int32_t);
 
-static uint8_t motorRange0(int32_t motorSpeed){
-	return MIN_MOTOR_SPEED < motorSpeed && motorSpeed <= MOTOR_SPEED_STEP_1;
+
+static MonitoringViolation checkMotorSpeedFlowRateRelation(int32_t motorSpeed, int32_t flowRate)
+{
+
+
+	static int32_t lastMotorSpeedViolation = -1;
+
+	for (size_t i = 0; i <= motorRangeViolationCheckSize; i++)
+	{
+		if(i == motorRangeViolationCheckSize)
+		{
+			lastMotorSpeedViolation = -1;
+			s_ticksSinceViolation = 0;
+			break;
+		}
+
+		if(motorRangeViolationCheck[i].motorRangeCheck(motorSpeed))
+		{
+			if(motorRangeViolationCheck[i].motorSpeedViolationCheck(flowRate))
+			{
+				s_ticksSinceViolation = 0;
+			} 
+			else 
+			{
+				if(lastMotorSpeedViolation != i)
+				{
+					DEBUG_LOGF("Flow rate violation detected: %d rpm, %d l/h\n\r", motorSpeed, flowRate);
+				}
+				lastMotorSpeedViolation = i;
+				s_ticksSinceViolation++;
+			}
+			break;
+		}
+	}
+
+	if(s_ticksSinceViolation >= TICKS_UNTIL_VIOLATION_DISPLAY)
+	{
+		return MONITORING_VIOLATION;
+	}
+	return NO_MONITORING_VIOLATION;
 }
 
-static uint8_t motorRange1(int32_t motorSpeed){
-	return MOTOR_SPEED_STEP_1 < motorSpeed && motorSpeed <= MOTOR_SPEED_STEP_2;
+static MonitoringViolation checkMotorSpeed(int32_t motorSpeed)
+{
+	
+	static int32_t motorSpeedLimit1ViolationCounter = 0;
+	static int32_t motorSpeedLimit1HysteresisThresholdCounter = 0;
+	static int32_t motorSpeedLimit2ViolationCounter = 0;
+	static int32_t motorSpeedLimit2HysteresisThresholdCounter = 0;
+
+	static MonitoringViolation motorWarningState = NO_MONITORING_VIOLATION;
+
+	if(motorSpeed > MOTOR_SPEED_LIMIT_2)
+	{
+		if(motorSpeedLimit2ViolationCounter == 0)
+		{
+			DEBUG_LOGF("Motor speed exceedes Limit 2: %d rpm\n\r", motorSpeed);
+		}
+		motorSpeedLimit1ViolationCounter++;
+		motorSpeedLimit2ViolationCounter++;
+	} 
+	else if(motorSpeed > MOTOR_SPEED_LIMIT_1)
+	{
+		if(motorSpeedLimit1ViolationCounter == 0)
+		{
+			DEBUG_LOGF("Motor speed exceedes Limit 1: %d rpm\n\r", motorSpeed);
+		}
+		motorSpeedLimit2ViolationCounter = 0;
+		motorSpeedLimit1ViolationCounter++;
+	} 
+	else 
+	{
+		motorSpeedLimit1ViolationCounter = 0;
+		motorSpeedLimit2ViolationCounter = 0;
+	}
+
+	if(motorSpeed < MOTOR_SPEED_LIMIT_1_WARNING_RESOLVE)
+	{
+		motorSpeedLimit1HysteresisThresholdCounter++;
+	} 
+	else if(motorSpeed < MOTOR_SPEED_LIMIT_2_WARNING_RESOLVE)
+	{
+		motorSpeedLimit2HysteresisThresholdCounter++;
+		motorSpeedLimit1HysteresisThresholdCounter = 0;
+	} 
+	else 
+	{
+		motorSpeedLimit1HysteresisThresholdCounter = 0;
+		motorSpeedLimit2HysteresisThresholdCounter = 0;
+	}
+
+	if (motorSpeedLimit1ViolationCounter > TICKS_UNTIL_LIMIT_1_WARNING && motorWarningState == NO_MONITORING_VIOLATION)
+	{
+		motorWarningState = MONITORING_VIOLATION;
+	}
+
+	if(motorSpeedLimit2ViolationCounter > TICKS_UNTIL_LIMIT_2_WARNING)
+	{
+		motorWarningState = CRITICAL_MONITORING_VIOLATION;
+	}
+
+	if(motorSpeedLimit2HysteresisThresholdCounter > TICKS_UNTIL_LIMIT_WARNING_RESOLVE && motorWarningState == CRITICAL_MONITORING_VIOLATION)
+	{
+		motorWarningState = MONITORING_VIOLATION;
+	}
+
+	if(motorSpeedLimit1HysteresisThresholdCounter > TICKS_UNTIL_LIMIT_WARNING_RESOLVE && motorWarningState == MONITORING_VIOLATION)
+	{
+		motorWarningState = NO_MONITORING_VIOLATION;
+	}
+
+	return motorWarningState;
 }
 
-static uint8_t motorRange2(int32_t motorSpeed){
-	return MOTOR_SPEED_STEP_2 < motorSpeed && motorSpeed <= MOTOR_SPEED_STEP_3;
-}
-
-static uint8_t motorRange3(int32_t motorSpeed){
-	return MOTOR_SPEED_STEP_3 < motorSpeed;
-}
-
-typedef uint8_t (*MotorSpeedViolationCheck)(int32_t);
-
-static uint8_t motorSpeedViolation0(int32_t flowRate){
-	return MIN_FLOW_RATE < flowRate && flowRate <= FLOW_RATE_STEP_1;
-}
-
-static uint8_t motorSpeedViolation1(int32_t flowRate){
-	return FLOW_RATE_STEP_1 < flowRate && flowRate <= FLOW_RATE_STEP_2;
-}
-
-static uint8_t motorSpeedViolation2(int32_t flowRate){
-	return FLOW_RATE_STEP_2 < flowRate && flowRate <= FLOW_RATE_STEP_3;
-}
-
-static uint8_t motorSpeedViolation3(int32_t flowRate){
-	return flowRate <= MAX_FLOW_RATE;
-}
-
-typedef struct {
-	MotorRangeCheck motorRangeCheck;
-	MotorSpeedViolationCheck motorSpeedViolationCheck;
-} MotorRangeViolationCheck;
-
-static const MotorRangeViolationCheck motorRangeViolationCheck[] = {
-	{motorRange0, motorSpeedViolation0},
-	{motorRange1, motorSpeedViolation1},
-	{motorRange2, motorSpeedViolation2},
-	{motorRange3, motorSpeedViolation3}
-};
-
-static const size_t motorRangeViolationCheckSize = sizeof(motorRangeViolationCheck) / sizeof(MotorRangeViolationCheck);
 
 static int32_t onStateOperational(State_t* pState, int32_t eventID)
 {
@@ -309,7 +456,7 @@ static int32_t onStateOperational(State_t* pState, int32_t eventID)
 		return appSendEvent(EVT_ID_EVENT_MAINTENANCE);
 	}
 
-	if(s_setFlowRate < 0)
+	if(s_setFlowRate == INVALID_FLOW_RATE)
 	{
 		DisplayValues dispValues;
 		dispValues.RightDisplay = DIGIT_LOWER_O;
@@ -341,92 +488,14 @@ static int32_t onStateOperational(State_t* pState, int32_t eventID)
 		s_motorState = MOTOR_ON;
 	}
 
-	static int32_t motorSpeedLimit1ViolationCounter = 0;
-	static int32_t motorSpeedLimit1HysteresisThresholdCounter = 0;
-	static int32_t motorSpeedLimit2ViolationCounter = 0;
-	static int32_t motorSpeedLimit2HysteresisThresholdCounter = 0;
-
-	static int32_t lastMotorSpeedViolation = -1;
-
 	if(s_motorState != MOTOR_OFF && !s_manualMotorOverride)
 	{
-		for (size_t i = 0; i <= motorRangeViolationCheckSize; i++)
-		{
-			if(i == motorRangeViolationCheckSize)
-			{
-				lastMotorSpeedViolation = -1;
-				s_ticksSinceViolation = 0;
-				break;
-			}
-			if(motorRangeViolationCheck[i].motorRangeCheck(motorSpeed))
-			{
-				if(motorRangeViolationCheck[i].motorSpeedViolationCheck(flowRate))
-				{
-					s_ticksSinceViolation = 0;
-				} else {
-					if(lastMotorSpeedViolation != i)
-					{
-						DEBUG_LOGF("Flow rate violation detected: %d rpm, %d l/h\n\r", motorSpeed, flowRate);
-					}
-					lastMotorSpeedViolation = i;
-					s_ticksSinceViolation++;
-				}
-				break;
-			}
-		}
-
-		MonitoringViolation monitoringViolation = NO_MONITORING_VIOLATION;
-		if(s_ticksSinceViolation >= TICKS_UNTIL_VIOLATION_DISPLAY){
-
-			monitoringViolation = MONITORING_VIOLATION;
-		}
-
-		if(motorSpeed > MOTOR_SPEED_LIMIT_2){
-			if(motorSpeedLimit2ViolationCounter == 0)
-			{
-				DEBUG_LOGF("Motor speed exceedes Limit 2: %d rpm\n\r", motorSpeed);
-			}
-			motorSpeedLimit1ViolationCounter++;
-			motorSpeedLimit2ViolationCounter++;
-		} else if(motorSpeed > MOTOR_SPEED_LIMIT_1){
-			if(motorSpeedLimit1ViolationCounter == 0)
-			{
-				DEBUG_LOGF("Motor speed exceedes Limit 1: %d rpm\n\r", motorSpeed);
-			}
-			motorSpeedLimit2ViolationCounter = 0;
-			motorSpeedLimit1ViolationCounter++;
-		} else {
-			motorSpeedLimit1ViolationCounter = 0;
-			motorSpeedLimit2ViolationCounter = 0;
-		}
-		if(motorSpeed < MOTOR_SPEED_LIMIT_1_WARNING_RESOLVE){
-			motorSpeedLimit1HysteresisThresholdCounter++;
-		} else if(motorSpeed < MOTOR_SPEED_LIMIT_2_WARNING_RESOLVE){
-			motorSpeedLimit2HysteresisThresholdCounter++;
-			motorSpeedLimit1HysteresisThresholdCounter = 0;
-		} else {
-			motorSpeedLimit1HysteresisThresholdCounter = 0;
-			motorSpeedLimit2HysteresisThresholdCounter = 0;
-		}
-
-		if (motorSpeedLimit1ViolationCounter > TICKS_UNTIL_LIMIT_1_WARNING && s_motorWarningState == NO_MONITORING_VIOLATION)
-		{
-			s_motorWarningState = MONITORING_VIOLATION;
-		}
-		if(motorSpeedLimit2ViolationCounter > TICKS_UNTIL_LIMIT_2_WARNING)
-		{
-			s_motorWarningState = CRITICAL_MONITORING_VIOLATION;
-		}
-		if(motorSpeedLimit2HysteresisThresholdCounter > TICKS_UNTIL_LIMIT_WARNING_RESOLVE && s_motorWarningState == CRITICAL_MONITORING_VIOLATION)
-		{
-			s_motorWarningState = MONITORING_VIOLATION;
-		}
-		if(motorSpeedLimit1HysteresisThresholdCounter > TICKS_UNTIL_LIMIT_WARNING_RESOLVE && s_motorWarningState == MONITORING_VIOLATION)
-		{
-			s_motorWarningState = NO_MONITORING_VIOLATION;
-		}
 		
-		MonitoringViolation worstViolation = s_motorWarningState > monitoringViolation ? s_motorWarningState : monitoringViolation;
+		MonitoringViolation monitoringViolation1 = checkMotorSpeedFlowRateRelation(motorSpeed, flowRate);
+		MonitoringViolation monitoringViolation2 = checkMotorSpeed(motorSpeed);
+
+		// Choose the biggest violation
+		MonitoringViolation worstViolation = monitoringViolation1 > monitoringViolation2 ? monitoringViolation1 : monitoringViolation2;
 		switch(worstViolation)
 		{
 			case NO_MONITORING_VIOLATION:
@@ -440,12 +509,17 @@ static int32_t onStateOperational(State_t* pState, int32_t eventID)
 				break;
 		}
 
-		if(flowRate >= s_setFlowRate && worstViolation == NO_MONITORING_VIOLATION){
+		if(flowRate >= s_setFlowRate && worstViolation == NO_MONITORING_VIOLATION)
+		{
 			setLEDValue(LED3, LED_TURNED_ON);
-		} else {
+		} 
+		else 
+		{
 			setLEDValue(LED3, LED_BLINKING);
 		}
-	} else {
+	} 
+	else 
+	{
 		setLEDValue(LED3, LED_TURNED_OFF);
 	}
 
@@ -462,6 +536,8 @@ static void clutterStack()
 	{
 		stack[i] = i;
 	}
+	//Suppress unused variable warning
+	UNUSED(stack);
 }
 
 static int32_t onEntryMaintenance(State_t* pState, int32_t eventID)
@@ -495,7 +571,7 @@ static int32_t onStateMaintenance(State_t* pState, int32_t eventID)
 	uint8_t buttonState_SW2 = wasButtonSW2Pressed();
 
 	/* check whether the flow rate is set or not. */
-	if(s_setFlowRate < 0)
+	if(s_setFlowRate == INVALID_FLOW_RATE)
 	{
 		DispValues.RightDisplay = DIGIT_DASH;
 		DispValues.LeftDisplay = DIGIT_DASH;
@@ -554,36 +630,78 @@ static int32_t onStateMaintenance(State_t* pState, int32_t eventID)
     return STATETBL_ERR_OK;
 }
 
+
+static uint8_t motorRange0(int32_t motorSpeed)
+{
+	return MIN_MOTOR_SPEED < motorSpeed && motorSpeed <= MOTOR_SPEED_STEP_1;
+}
+
+static uint8_t motorRange1(int32_t motorSpeed)
+{
+	return MOTOR_SPEED_STEP_1 < motorSpeed && motorSpeed <= MOTOR_SPEED_STEP_2;
+}
+
+static uint8_t motorRange2(int32_t motorSpeed)
+{
+	return MOTOR_SPEED_STEP_2 < motorSpeed && motorSpeed <= MOTOR_SPEED_STEP_3;
+}
+
+static uint8_t motorRange3(int32_t motorSpeed)
+{
+	return MOTOR_SPEED_STEP_3 < motorSpeed;
+}
+
+
+static uint8_t motorSpeedViolation0(int32_t flowRate)
+{
+	return MIN_FLOW_RATE < flowRate && flowRate <= FLOW_RATE_STEP_1;
+}
+
+static uint8_t motorSpeedViolation1(int32_t flowRate)
+{
+	return FLOW_RATE_STEP_1 < flowRate && flowRate <= FLOW_RATE_STEP_2;
+}
+
+static uint8_t motorSpeedViolation2(int32_t flowRate)
+{
+	return FLOW_RATE_STEP_2 < flowRate && flowRate <= FLOW_RATE_STEP_3;
+}
+
+static uint8_t motorSpeedViolation3(int32_t flowRate)
+{
+	return flowRate <= MAX_FLOW_RATE;
+}
+
 int32_t getMotorSpeed()
 {
-	static uint8_t wasViolatedLastTime = false;
+	static uint8_t wasMotorSensorVoltageViolatedLastTime = false;
 	int32_t voltage = getPot1Value();
 	if(voltage < SENSOR_MIN_VOLTAGE || voltage > SENSOR_MAX_VOLTAGE)
 	{
-		if(!wasViolatedLastTime)
+		if(!wasMotorSensorVoltageViolatedLastTime)
 		{
 			DEBUG_LOGF("Invalid voltage on motor speed sensor: %d\n\r", voltage);
 		}
-		wasViolatedLastTime = true;
+		wasMotorSensorVoltageViolatedLastTime = true;
 		return -1;
 	}
-	wasViolatedLastTime = false;
+	wasMotorSensorVoltageViolatedLastTime = false;
     return (voltage - SENSOR_MIN_VOLTAGE) / RPM_PER_MICROVOLT;
 }
 
 int32_t getFlowRate()
 {
-	static uint8_t wasViolatedLastTime = false;
+	static uint8_t wasFlowRateSensorVoltageViolatedLastTime = false;
 	int32_t voltage = getPot2Value();
 	if(voltage < SENSOR_MIN_VOLTAGE || voltage > SENSOR_MAX_VOLTAGE)
 	{
-		if(!wasViolatedLastTime)
+		if(!wasFlowRateSensorVoltageViolatedLastTime)
 		{
 			DEBUG_LOGF("Invalid voltage on flow rate sensor: %d\n\r", voltage);
 		}
-		wasViolatedLastTime = true;
+		wasFlowRateSensorVoltageViolatedLastTime = true;
 		return -1;
 	}
-	wasViolatedLastTime = false;
+	wasFlowRateSensorVoltageViolatedLastTime = false;
     return (voltage - SENSOR_MIN_VOLTAGE) / FLOW_PER_MICROVOLT;
 }

@@ -30,13 +30,13 @@
 
 
 /***** PRIVATE VARIABLES *****************************************************/
-static DisplayValues i_DispValues;
+static DisplayValues s_dispValues;
 
 /***** PUBLIC FUNCTIONS ******************************************************/
 void setDisplayValue(DisplayValues DispValues)
 {
-	i_DispValues.LeftDisplay = DispValues.LeftDisplay;
-	i_DispValues.RightDisplay = DispValues.RightDisplay;
+	s_dispValues.LeftDisplay = DispValues.LeftDisplay;
+	s_dispValues.RightDisplay = DispValues.RightDisplay;
 }
 
 void showDisplayValue()
@@ -44,11 +44,11 @@ void showDisplayValue()
 	static uint8_t s_displayCycle = 0b1;
 	if(s_displayCycle)
 	{
-		displayShowDigit(LEFT_DISPLAY, i_DispValues.LeftDisplay);
+		displayShowDigit(LEFT_DISPLAY, s_dispValues.LeftDisplay);
 	}
 	else
 	{
-		displayShowDigit(RIGHT_DISPLAY, i_DispValues.RightDisplay);
+		displayShowDigit(RIGHT_DISPLAY, s_dispValues.RightDisplay);
 	}
 	s_displayCycle ^= 1;
 }

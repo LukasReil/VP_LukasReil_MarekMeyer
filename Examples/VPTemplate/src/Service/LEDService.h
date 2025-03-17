@@ -30,11 +30,12 @@
 
 /***** MACROS ****************************************************************/
 
-#define LED_SERVICE_UPDATE_PERIOD_MS 10
-#define LED_BLINK_HALF_PERIOD_CYCLES 50
 
 /***** TYPES *****************************************************************/
 
+/**
+ * @brief   Enumeration of the LED States
+ */
 typedef enum _LED_Value_t
 {
     LED_TURNED_ON  = LED_ON,             //!< Value to turn a LED on

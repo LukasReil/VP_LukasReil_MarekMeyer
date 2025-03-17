@@ -22,6 +22,8 @@
 
 /***** PRIVATE CONSTANTS *****************************************************/
 
+static const uint8_t LED_SERVICE_UPDATE_PERIOD_MS = 10;
+static const uint8_t LED_BLINK_HALF_PERIOD_CYCLES = LED_SERVICE_UPDATE_PERIOD_MS * 10 / 2;
 
 /***** PRIVATE MACROS ********************************************************/
 
@@ -38,6 +40,7 @@ static LED_Value_t s_ledValues[LED4+1] = {0};
 
 
 /***** PUBLIC FUNCTIONS ******************************************************/
+
 
 void updateLEDs()
 {
